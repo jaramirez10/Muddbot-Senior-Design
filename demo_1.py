@@ -19,12 +19,12 @@ servo = Servo(18)
 # right sensor: echo on GPIO 17, trigger on GPIO 4.
 right_sensor = DistanceSensor(echo=17, trigger=4)
 # left sensor: echo on GPIO 27, trigger on GPIO 22.
-left_sensor = DistanceSensor(echo=27, trigger=22)
+left_sensor = DistanceSensor(echo=22, trigger=27)
 
 #front_sensor = DistanceSensor(echo=,trigger=)
 
 # Define a threshold distance (in meters) for obstacle detection.
-THRESHOLD_DISTANCE_LR = 0.3
+THRESHOLD_DISTANCE_LR = 0.2
 THRESHOLD_DISTANCE_FWD = 0.5
 
 # -------------------------------
@@ -33,7 +33,7 @@ THRESHOLD_DISTANCE_FWD = 0.5
 # Change the device name/port as needed.
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
-speed = 150
+speed = 170
 
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
@@ -49,7 +49,7 @@ def steer_right_action(arduino):
     steer right (e.g., by setting servo to -1) and send a serial command.
     """
     print("Left obstacle detected! Steering right...")
-    servo.value = -1    # Local servo action (steering right)
+    servo.value = -0.5   # Local servo action (steering right)
     sleep(1)
     # Return steering to straight
     servo.value = 0
@@ -61,7 +61,7 @@ def steer_left_action(arduino):
     steer left (e.g., by setting servo to 1) and send a serial command.
     """
     print("Right obstacle detected! Steering left...")
-    servo.value = 1     # Local servo action (steering left)
+    servo.value = 0.5     # Local servo action (steering left)
     sleep(1)
     # Return steering to straight
     servo.value = 0
