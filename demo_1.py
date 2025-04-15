@@ -33,7 +33,7 @@ THRESHOLD_DISTANCE_FWD = 0.5
 # Change the device name/port as needed.
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
-speed = 170
+speed = 200
 
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
