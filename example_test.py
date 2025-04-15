@@ -28,7 +28,7 @@ THRESHOLD_DISTANCE = 0.3
 # Serial Communication Setup
 # -------------------------------
 # Change the device name/port as needed.
-SERIAL_PORT = "/dev/ttyACM0"
+SERIAL_PORT = "/dev/ttyAMA10"
 BAUD_RATE = 9600
 
 def send_command(arduino, cmd):

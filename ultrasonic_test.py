@@ -4,7 +4,7 @@ import string
 
 right_sensor = DistanceSensor(echo=17, trigger=4)
 
-left_sensor = DistanceSensor(echo=27, trigger=22)
+left_sensor = DistanceSensor(echo=22, trigger=27)
 # Prints distance away from the sensor in meters
 while True:
     print("right" +str(right_sensor.distance) + " m")
