@@ -2,6 +2,7 @@
 
 import socket
 import smtplib
+import ssl
 from email.message import EmailMessage
 
 def get_ip():
@@ -25,7 +26,7 @@ def send_email(ip):
 
     # Send using Gmail (or replace with your SMTP provider)
     smtp_user = 'muddbot2025@gmail.com'
-    smtp_pass = 'D@vidV@ll@ncourt2025!'  # Use an app password for Gmail
+    smtp_pass = 'iajpxbebpiwpjick'  # Use an app password for Gmail
 
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
         smtp.login(smtp_user, smtp_pass)
