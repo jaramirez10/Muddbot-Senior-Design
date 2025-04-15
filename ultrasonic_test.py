@@ -2,10 +2,13 @@ from gpiozero import DistanceSensor
 import string
 
 
-ultrasonic = DistanceSensor(echo=17, trigger=4)
+right_sensor = DistanceSensor(echo=17, trigger=4)
+
+left_sensor = DistanceSensor(echo=27, trigger=22)
 # Prints distance away from the sensor in meters
 while True:
-    print(str(ultrasonic.distance) + " m")
+    print(str("right: "+right_sensor.distance) + " m")
+    print(str("left: "+left_sensor.distance) + " m")
 
 # Loop for printing whether in range of the sensor
   #while True:
