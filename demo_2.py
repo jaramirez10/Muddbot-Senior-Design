@@ -24,6 +24,7 @@ if __name__ == '__main__':
                     else:
                         arduino.write(cmd.encode())
                         #time.sleep(0.1) #wait for arduino to answer
+                        print(f"Sent command:_{cmd}_")
                         while arduino.inWaiting()==0: pass
                         if  arduino.inWaiting()>0: 
                             answer=arduino.readline()
