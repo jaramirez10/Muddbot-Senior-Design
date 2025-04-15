@@ -16,10 +16,10 @@ import time
 servo = Servo(18)
 
 # Set up the two ultrasonic sensors:
-# Left sensor: echo on GPIO 17, trigger on GPIO 4.
-left_sensor = DistanceSensor(echo=17, trigger=4)
-# Right sensor: echo on GPIO 27, trigger on GPIO 22.
-right_sensor = DistanceSensor(echo=27, trigger=22)
+# right sensor: echo on GPIO 17, trigger on GPIO 4.
+right_sensor = DistanceSensor(echo=17, trigger=4)
+# left sensor: echo on GPIO 27, trigger on GPIO 22.
+left_sensor = DistanceSensor(echo=27, trigger=22)
 
 #front_sensor = DistanceSensor(echo=,trigger=)
 
