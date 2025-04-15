@@ -38,7 +38,7 @@ speed = 200
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
 
-    arduino.write((cmd+'\n').encode())
+    arduino.write((cmd).encode())
     print(f"Sent command:_{cmd}_")
 
 # -------------------------------
@@ -50,11 +50,11 @@ def steer_right_action(arduino):
     steer right (e.g., by setting servo to -1) and send a serial command.
     """
     print("Left obstacle detected! Steering right...")
-    servo.value = -0.5   # Local servo action (steering right)
+    servo.value = -0.3   # Local servo action (steering right)
     sleep(1)
     # Return steering to straight
-    servo.value = 0
-    sleep(1)
+    #servo.value = 0
+    #sleep(1)
 
 def steer_left_action(arduino):
     """
@@ -62,11 +62,11 @@ def steer_left_action(arduino):
     steer left (e.g., by setting servo to 1) and send a serial command.
     """
     print("Right obstacle detected! Steering left...")
-    servo.value = 0.5     # Local servo action (steering left)
+    servo.value = 0.3     # Local servo action (steering left)
     sleep(1)
     # Return steering to straight
-    servo.value = 0
-    sleep(1)
+    #servo.value = 0
+    #sleep(1)
 
 def fwd_action(arduino):
     """
