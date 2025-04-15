@@ -79,7 +79,6 @@ def fwd_action(arduino):
         answer=arduino.readline()
         print(answer)
         arduino.flushInput() #remove data after reading
-    sleep(0.5)
 
 def stop_action(arduino):
     """
@@ -123,8 +122,6 @@ def main():
                         steer_left_action(arduino)
                     else:
                         fwd_action(arduino)
-
-                    sleep(0.1)  # Short pause to reduce busy looping.
             except KeyboardInterrupt:
                 print("KeyboardInterrupt caught, exiting.")
         else:
