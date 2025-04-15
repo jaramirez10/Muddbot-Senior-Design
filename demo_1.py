@@ -37,8 +37,14 @@ speed = 170
 
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
-    arduino.write((cmd + "\n").encode())
-    print("Sent command:", cmd)
+
+    arduino.write((cmd).encode())
+    while arduino.inWaiting()==0: pass
+    if  arduino.inWaiting()>0: 
+        answer=arduino.readline()
+        print(answer)
+        arduino.flushInput() #remove data after reading
+    print(f"Sent command:_{cmd}_")
 
 # -------------------------------
 # Obstacle Avoidance Functions
@@ -73,11 +79,6 @@ def fwd_action(arduino):
     """
     print("No obstacles detected. Moving forward.")
     send_command(arduino, "FORWARD")
-    while arduino.inWaiting()==0: pass
-    if  arduino.inWaiting()>0: 
-        answer=arduino.readline()
-        print(answer)
-        arduino.flushInput() #remove data after reading
     sleep(0.5)
 
 def stop_action(arduino):
@@ -87,11 +88,6 @@ def stop_action(arduino):
     """
     print("Obstacles detected on both sides. Stopping.")
     send_command(arduino, "STOP")
-    while arduino.inWaiting()==0: pass
-    if  arduino.inWaiting()>0: 
-        answer=arduino.readline()
-        print(answer)
-        arduino.flushInput() #remove data afte
     sleep(1)
 
 # -------------------------------
