@@ -6,6 +6,7 @@
 from gpiozero import Servo
 servo = Servo(18)
 
+
 import serial,time
 if __name__ == '__main__':
     

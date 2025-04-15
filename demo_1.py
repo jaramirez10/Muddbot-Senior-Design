@@ -21,7 +21,7 @@ left_sensor = DistanceSensor(echo=17, trigger=4)
 # Right sensor: echo on GPIO 27, trigger on GPIO 22.
 right_sensor = DistanceSensor(echo=27, trigger=22)
 
-front_sensor = DistanceSensor(echo=,trigger=)
+#front_sensor = DistanceSensor(echo=,trigger=)
 
 # Define a threshold distance (in meters) for obstacle detection.
 THRESHOLD_DISTANCE_LR = 0.3
@@ -103,12 +103,12 @@ def main():
                     # Read distances from both ultrasonic sensors.
                     left_distance = left_sensor.distance   # in meters
                     right_distance = right_sensor.distance # in meters
-                    front_distance = front_sensor.distance # in meters
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Forward distance: {:.2f}".format(left_distance, right_distance, front_distance))
+                    #front_distance = front_sensor.distance # in meters
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m".format(left_distance, right_distance))
 
                     # Decide on action based on sensor readings.
-                    if front_distance < THRESHOLD_DISTANCE_FWD:
-                        stop_action(arduino)
+                    #if front_distance < THRESHOLD_DISTANCE_FWD:
+                     #   stop_action(arduino)
                     if left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR:
                         stop_action(arduino)
                     elif left_distance < THRESHOLD_DISTANCE_LR:
