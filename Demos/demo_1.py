@@ -18,7 +18,7 @@ servo = Servo(18)
 # Set up the two ultrasonic sensors:
 # right sensor: echo on GPIO 17, trigger on GPIO 4.
 right_sensor = DistanceSensor(echo=17, trigger=4)
-# left sensor: echo on GPIO 27, trigger on GPIO 22.
+# left sensor: echo on GPIO 22, trigger on GPIO 27.
 left_sensor = DistanceSensor(echo=22, trigger=27)
 
 #front_sensor = DistanceSensor(echo=,trigger=)
@@ -37,14 +37,13 @@ speed = 200
 
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
-
     arduino.write((cmd).encode())
     print(f"Sent command:_{cmd}_")
 
 # -------------------------------
 # Obstacle Avoidance Functions
 # -------------------------------
-def steer_right_action(arduino):
+def steer_right_action():
     """
     If an obstacle is detected on the left side,
     steer right (e.g., by setting servo to -1) and send a serial command.
@@ -56,7 +55,7 @@ def steer_right_action(arduino):
     #servo.value = 0
     #sleep(1)
 
-def steer_left_action(arduino):
+def steer_left_action():
     """
     If an obstacle is detected on the right side,
     steer left (e.g., by setting servo to 1) and send a serial command.
@@ -117,9 +116,9 @@ def main():
                     if left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR:
                         stop_action(arduino)
                     elif left_distance < THRESHOLD_DISTANCE_LR:
-                        steer_right_action(arduino)
+                        steer_right_action()
                     elif right_distance < THRESHOLD_DISTANCE_LR:
-                        steer_left_action(arduino)
+                        steer_left_action()
                     else:
                         fwd_action(arduino)
             except KeyboardInterrupt:
