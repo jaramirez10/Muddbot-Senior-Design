@@ -25,6 +25,8 @@ left_sensor = DistanceSensor(echo=22, trigger=27)
 
 # Define a threshold distance (in meters) for obstacle detection.
 THRESHOLD_DISTANCE_LR = 0.1
+STEER_SLEEP_LEN = 0.1 # in seconds
+STEER_INCREMENT = 0.1
 
 # -------------------------------
 # Serial Communication Setup
@@ -89,16 +91,20 @@ def main():
                     if left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR:
                         stop_action(arduino)
                     elif left_distance < THRESHOLD_DISTANCE_LR:
-                        if(steer <= 0.9):
-                            steer += 0.1
+                        if(steer <= 1-STEER_INCREMENT):
+                            steer += STEER_INCREMENT
                         servo.value = steer
+                        sleep(STEER_SLEEP_LEN)
                     elif right_distance < THRESHOLD_DISTANCE_LR:
-                        if steer >= -0.9:
-                            steer -= 0.1
+                        if steer >= (-1+STEER_INCREMENT):
+                            steer -= STEER_INCREMENT
                         servo.value = steer
+                        sleep(STEER_SLEEP_LEN)
                     else:
                         fwd_action(arduino)
             except KeyboardInterrupt:
+                send_command(arduino, "STOP")
+                sleep(1)
                 print("KeyboardInterrupt caught, exiting.")
         else:
             print("Arduino not connected.")
