@@ -39,8 +39,8 @@ ret, K, distCoeffs, rvecs, tvecs = cv.calibrateCamera(
 
 data = {
     'K':        K.tolist(),
-    'dist':     distCoeffs.flatten().tolist()
-    'rvecs':    rvecs.toList()
+    'dist':     distCoeffs.flatten().tolist(),
+    'rvecs':    rvecs.toList(),
     'tvecs':    tvecs.toList()
 }
 
