@@ -90,6 +90,7 @@ def main():
                     #if front_distance < THRESHOLD_DISTANCE_FWD:
                      #   stop_action(arduino)
                     if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
+                        driving = False
                         stop_action(arduino)
                     elif right_distance < THRESHOLD_DISTANCE_LR:
                         if(steer <= 1-STEER_INCREMENT):
@@ -102,6 +103,7 @@ def main():
                         servo.value = steer
                         sleep(STEER_SLEEP_LEN)
                     elif not driving:
+                        driving = True
                         fwd_action(arduino)
             except KeyboardInterrupt:
                 send_command(arduino, "STOP")
