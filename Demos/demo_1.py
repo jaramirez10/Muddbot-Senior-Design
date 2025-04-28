@@ -24,8 +24,7 @@ left_sensor = DistanceSensor(echo=22, trigger=27)
 #front_sensor = DistanceSensor(echo=,trigger=)
 
 # Define a threshold distance (in meters) for obstacle detection.
-THRESHOLD_DISTANCE_LR = 0.2
-THRESHOLD_DISTANCE_FWD = 0.5
+THRESHOLD_DISTANCE_LR = 0.1
 
 # -------------------------------
 # Serial Communication Setup
@@ -33,39 +32,14 @@ THRESHOLD_DISTANCE_FWD = 0.5
 # Change the device name/port as needed.
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
-speed = 200
+speed = 70
+steer = 0
 
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
     arduino.write((cmd).encode())
     print(f"Sent command:_{cmd}_")
 
-# -------------------------------
-# Obstacle Avoidance Functions
-# -------------------------------
-def steer_right_action():
-    """
-    If an obstacle is detected on the left side,
-    steer right (e.g., by setting servo to -1) and send a serial command.
-    """
-    print("Left obstacle detected! Steering right...")
-    servo.value = -0.3   # Local servo action (steering right)
-    sleep(1)
-    # Return steering to straight
-    #servo.value = 0
-    #sleep(1)
-
-def steer_left_action():
-    """
-    If an obstacle is detected on the right side,
-    steer left (e.g., by setting servo to 1) and send a serial command.
-    """
-    print("Right obstacle detected! Steering left...")
-    servo.value = 0.3     # Local servo action (steering left)
-    sleep(1)
-    # Return steering to straight
-    #servo.value = 0
-    #sleep(1)
 
 def fwd_action(arduino):
     """
@@ -86,7 +60,7 @@ def stop_action(arduino):
     """
     print("Obstacles detected on both sides. Stopping.")
     send_command(arduino, "STOP")
-    sleep(1)
+    sleep(0.01)
 
 # -------------------------------
 # Main Loop: Integrated Control
@@ -101,7 +75,7 @@ def main():
             # Set initial speed
             send_command(arduino, f"SPEED {speed}")
             # Set initial servo position (straight ahead).
-            servo.value = 0
+            servo.value = steer
             try:
                 while True:
                     # Read distances from both ultrasonic sensors.
@@ -116,9 +90,13 @@ def main():
                     if left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR:
                         stop_action(arduino)
                     elif left_distance < THRESHOLD_DISTANCE_LR:
-                        steer_right_action()
+                        steer += 0.1
+                        servo.value = steer
+                        print(f"steering left a little, current steer is {steer}")
                     elif right_distance < THRESHOLD_DISTANCE_LR:
-                        steer_left_action()
+                        steer -= 0.1
+                        servo.value = steer
+                        print(f"steering right a little, current steer is {steer}")
                     else:
                         fwd_action(arduino)
             except KeyboardInterrupt:
