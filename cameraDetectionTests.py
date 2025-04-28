@@ -44,12 +44,13 @@ if __name__ == "__main__":
                 print("Camera read failed")
                 break
             cv2.imshow('frame', frame)
-
+            """
             if detect_red_obstacle(frame):
                 print("Vision: Red obstacle detected → stopping")
                 continue
             else:
-                print("no red object!")
+                print("no red object!")"""
+
     except KeyboardInterrupt:
         print("Exiting on user interrupt.")
     finally:
