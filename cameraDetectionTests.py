@@ -3,13 +3,13 @@
 """
 RC Car with Dual Ultrasonic + USB Camera (Red‑object) Fusion
 """
-import cv2
+import cv2 as cv
 import numpy as np
 from time import sleep
 import time
 
 
-cap = cv2.VideoCapture(0) # find usb port
+cap = cv.VideoCapture(0) # find usb port
 if not cap.isOpened():
     raise IOError("Cannot open USB camera")
 
@@ -18,22 +18,22 @@ def detect_red_obstacle(frame):
     """
     Returns True if a large red object is detected in the frame.
     """
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
     # red hue can wrap around, so mask two ranges
     lower1 = np.array([  0, 120,  70])
     upper1 = np.array([ 10, 255, 255])
     lower2 = np.array([170, 120,  70])
     upper2 = np.array([180, 255, 255])
-    mask = cv2.inRange(hsv, lower1, upper1) + cv2.inRange(hsv, lower2, upper2)
+    mask = cv.inRange(hsv, lower1, upper1) + cv.inRange(hsv, lower2, upper2)
 
     # Morphology to reduce noise
     kernel = np.ones((5,5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=2)
 
     # Count non-zero (red) pixels
-    red_count = cv2.countNonZero(mask)
+    red_count = cv.countNonZero(mask)
     # Debug: show mask if needed
-    # cv2.imshow("Red Mask", mask)
+    # cv.imshow("Red Mask", mask)
     return red_count > 2000  # tweak threshold to your environment
 
 if __name__ == "__main__":
@@ -43,7 +43,9 @@ if __name__ == "__main__":
             if not ret:
                 print("Camera read failed")
                 break
-            cv2.imshow('frame', frame)
+            cv.imshow('frame', frame)
+            if cv.waitKey(1) == ord('q'):
+                break
             """
             if detect_red_obstacle(frame):
                 print("Vision: Red obstacle detected → stopping")
@@ -55,4 +57,4 @@ if __name__ == "__main__":
         print("Exiting on user interrupt.")
     finally:
         cap.release()
-        cv2.destroyAllWindows()
+        cv.destroyAllWindows()
