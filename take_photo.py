@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 import time
-num_photos=20
+num_photos=2
 num_photos_taken =0
 delay_pics = 7.5
 cap = cv.VideoCapture(0)
