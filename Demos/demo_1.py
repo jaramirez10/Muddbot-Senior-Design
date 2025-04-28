@@ -65,6 +65,7 @@ def stop_action(arduino):
 # Main Loop: Integrated Control
 # -------------------------------
 def main():
+    driving = False
     speed = 70
     steer = 0
     print("Starting obstacle detection and motor drive loop...")
@@ -88,19 +89,19 @@ def main():
                     # Decide on action based on sensor readings.
                     #if front_distance < THRESHOLD_DISTANCE_FWD:
                      #   stop_action(arduino)
-                    if left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR:
+                    if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
                         stop_action(arduino)
-                    elif left_distance < THRESHOLD_DISTANCE_LR:
+                    elif right_distance < THRESHOLD_DISTANCE_LR:
                         if(steer <= 1-STEER_INCREMENT):
                             steer += STEER_INCREMENT
                         servo.value = steer
                         sleep(STEER_SLEEP_LEN)
-                    elif right_distance < THRESHOLD_DISTANCE_LR:
+                    elif left_distance < THRESHOLD_DISTANCE_LR:
                         if steer >= (-1+STEER_INCREMENT):
                             steer -= STEER_INCREMENT
                         servo.value = steer
                         sleep(STEER_SLEEP_LEN)
-                    else:
+                    elif not driving:
                         fwd_action(arduino)
             except KeyboardInterrupt:
                 send_command(arduino, "STOP")
