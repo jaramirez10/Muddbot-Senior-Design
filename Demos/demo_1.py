@@ -43,7 +43,6 @@ def fwd_action(arduino):
     """
     With no obstacles, command the RC car to move forward.
     """
-    print("No obstacles detected. Moving forward.")
     send_command(arduino, "FORWARD")
     while arduino.inWaiting()==0: pass
     if  arduino.inWaiting()>0: 
@@ -58,7 +57,7 @@ def stop_action(arduino):
     """
     print("Obstacles detected on both sides. Stopping.")
     send_command(arduino, "STOP")
-    sleep(0.01)
+    sleep(1)
 
 # -------------------------------
 # Main Loop: Integrated Control
@@ -82,7 +81,7 @@ def main():
                     left_distance = left_sensor.distance   # in meters
                     right_distance = right_sensor.distance # in meters
                     #front_distance = front_sensor.distance # in meters
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m".format(left_distance, right_distance))
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}".format(left_distance, right_distance, steer))
 
                     # Decide on action based on sensor readings.
                     #if front_distance < THRESHOLD_DISTANCE_FWD:
@@ -93,12 +92,10 @@ def main():
                         if(steer <= 0.9):
                             steer += 0.1
                         servo.value = steer
-                        print(f"steering left a little, current steer is {steer}")
                     elif right_distance < THRESHOLD_DISTANCE_LR:
                         if steer >= -0.9:
                             steer -= 0.1
                         servo.value = steer
-                        print(f"steering right a little, current steer is {steer}")
                     else:
                         fwd_action(arduino)
             except KeyboardInterrupt:
