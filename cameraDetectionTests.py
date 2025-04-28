@@ -43,7 +43,7 @@ if __name__ == "__main__":
             if not ret:
                 print("Camera read failed")
                 break
-            cv2.imshow(frame)
+            cv2.imshow('frame', frame)
 
             if detect_red_obstacle(frame):
                 print("Vision: Red obstacle detected → stopping")
