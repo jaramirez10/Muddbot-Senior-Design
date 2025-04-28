@@ -33,7 +33,7 @@ try:
             if cv.waitKey(1) == ord('q'):
                 break
             end = time.time()
-        cv.imwrite(f'/camera_calibration_photos/image_{num_photos_taken}.png', frame)
+        cv.imwrite(f'image_{num_photos_taken}.png', frame)
         print(f"Took picture {num_photos_taken}!")
         num_photos_taken += 1
     print("Done with all pictures!")
