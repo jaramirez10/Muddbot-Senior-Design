@@ -90,11 +90,13 @@ def main():
                     if left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR:
                         stop_action(arduino)
                     elif left_distance < THRESHOLD_DISTANCE_LR:
-                        steer += 0.1
+                        if(steer <= 0.9):
+                            steer += 0.1
                         servo.value = steer
                         print(f"steering left a little, current steer is {steer}")
                     elif right_distance < THRESHOLD_DISTANCE_LR:
-                        steer -= 0.1
+                        if steer >= -0.9:
+                            steer -= 0.1
                         servo.value = steer
                         print(f"steering right a little, current steer is {steer}")
                     else:
