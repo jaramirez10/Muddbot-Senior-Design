@@ -32,8 +32,6 @@ THRESHOLD_DISTANCE_LR = 0.1
 # Change the device name/port as needed.
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
-speed = 70
-steer = 0
 
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
@@ -66,6 +64,8 @@ def stop_action(arduino):
 # Main Loop: Integrated Control
 # -------------------------------
 def main():
+    speed = 70
+    steer = 0
     print("Starting obstacle detection and motor drive loop...")
     # Open serial communication with Arduino.
     with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
