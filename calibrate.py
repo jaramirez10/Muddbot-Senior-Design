@@ -14,7 +14,7 @@ objpoints = []   # 3D points in world space
 imgpoints = []   # 2D points in image plane
 
 # 2) load all your calibration images
-for fname in glob.glob('camera_calibration_photos/image_[0-19].jpg'):
+for fname in glob.glob('camera_calibration_photos/image_[0-19].png'):
     img = cv.imread(fname)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
