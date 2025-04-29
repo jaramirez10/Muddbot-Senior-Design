@@ -71,3 +71,5 @@ min_dist = np.min(dists)
 text = f"Closest Obj: {min_dist:.2f} {'m' if odo_dist else 'units'}"
 cv.putText(raw, text, (20,30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
 cv.imshow('Live Distance + Features', raw)
+
+print("done")
