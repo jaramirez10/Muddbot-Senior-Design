@@ -5,7 +5,7 @@ import time
 import numpy as np
 from gpiozero import Servo, DistanceSensor
 from time import sleep
-from utils import *
+from utils.utils import *
 import serial
 
 # -------------------------------
