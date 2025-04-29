@@ -10,7 +10,7 @@ if not cap.isOpened():
     print("Cannot open camera")
     exit()
 try:
-    while num_photos_taken < num_photos:
+    while num_photos_taken < num_photos:    
         start=time.time()
         end = start
         while (end-start) < delay_pics:

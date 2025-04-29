@@ -26,7 +26,7 @@ try:
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     size = (frame_width, frame_height)
-    result = cv.VideoWriter('filename.avi',  
+    result = cv.VideoWriter('recording.avi',  
                             cv.VideoWriter_fourcc(*'MJPG'), 
                             10, size) 
 
