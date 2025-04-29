@@ -65,6 +65,8 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 while True:
     status, prev_gray, kp_prev, des, dists, raw = computer_vision(odo_dist, K, dist, cap, orb, bf, prev_gray, kp_prev, des_prev)
+    if(status == "break"):
+        break
     min_dist = np.min(dists)
 
     # DISPLAY DISTANCE & FEATURES
