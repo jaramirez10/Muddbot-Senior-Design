@@ -63,13 +63,21 @@ if not ret:
 prev_gray = cv.cvtColor(prev_raw, cv.COLOR_BGR2GRAY)
 prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
+while True:
+    status, prev_gray, kp_prev, des, dists, raw = computer_vision(odo_dist, K, dist, cap, orb, bf, prev_gray, kp_prev, des_prev)
+    min_dist = np.min(dists)
 
-status, prev_gray, kp_prev, des, dists, raw = computer_vision(odo_dist, K, dist, cap, orb, bf, prev_gray, kp_prev, des_prev)
-min_dist = np.min(dists)
-
-# DISPLAY DISTANCE & FEATURES
-text = f"Closest Obj: {min_dist:.2f} {'m' if odo_dist else 'units'}"
-cv.putText(raw, text, (20,30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
-cv.imshow('Live Distance + Features', raw)
+    # DISPLAY DISTANCE & FEATURES
+    text = f"Closest Obj: {min_dist:.2f} {'m' if odo_dist else 'units'}"
+    cv.putText(raw, text, (20,30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
+    cv.imshow('Live Distance + Features', raw)
+    result.write(raw)
+    
+    # break on ESC
+    if cv.waitKey(1) & 0xFF == 27:
+            break
 
 print("done")
+result.release()
+cap.release()
+cv.destroyAllWindows()
