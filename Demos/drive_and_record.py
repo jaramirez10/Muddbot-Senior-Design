@@ -17,7 +17,7 @@ servo = Servo(18)
 right_sensor = DistanceSensor(echo=17, trigger=4)
 left_sensor  = DistanceSensor(echo=22, trigger=27)
 
-THRESHOLD_DISTANCE_LR = 0.1
+THRESHOLD_DISTANCE_LR = 0.05
 STEER_SLEEP_LEN = 0.1 # in seconds
 STEER_INCREMENT = 0.1
 
@@ -67,7 +67,7 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
-speed = 70
+speed = 100
 steer = 0
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
