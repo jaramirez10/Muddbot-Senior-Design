@@ -69,7 +69,7 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
-speed = 100
+speed = 70
 steer = 0
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
@@ -105,7 +105,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
 
                     # Decide on action based on sensor readings.
                     t_now = time.time()
-                    print(f"\Delta t = {t_now - t_0}")
+                    print(f"delta t = {t_now - t_0}")
                     if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
                         print("stop")
                         driving = False
