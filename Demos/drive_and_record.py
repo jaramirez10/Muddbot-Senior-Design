@@ -134,12 +134,6 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         (20,90), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
                     
                     edited_recording.write(frame_out)
-
-                    cv.imshow('Depth + Features', frame_out)
-                    # break on ESC
-                    if cv.waitKey(1) & 0xFF == 27:
-                            break
-                    
             except KeyboardInterrupt:
                 send_command(arduino, "STOP")
                 sleep(1)
