@@ -105,7 +105,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
                         driving = False
                         stop_action(arduino)
-                    elif (t_0 - t_now) < STEER_SLEEP_LEN: 
+                    elif (t_now - t_0) < STEER_SLEEP_LEN: 
                         pass
                     elif right_distance < THRESHOLD_DISTANCE_LR:
                         if(steer <= 1-STEER_INCREMENT):
