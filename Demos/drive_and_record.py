@@ -81,6 +81,8 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
             # Set initial servo position (straight ahead).
             servo.value = steer
             t_0 = time.time()
+            fwd_action(arduino)
+            sleep(2)
             try:
                 while True:
                     # Read distances from both ultrasonic sensors.
