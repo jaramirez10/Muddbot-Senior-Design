@@ -111,10 +111,12 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         if(steer <= 1-STEER_INCREMENT):
                             steer += STEER_INCREMENT
                         servo.value = steer
+                        t_0 = t_now
                     elif left_distance < THRESHOLD_DISTANCE_LR:
                         if steer >= (-1+STEER_INCREMENT):
                             steer -= STEER_INCREMENT
                         servo.value = steer
+                        t_0 = t_now
                     elif not driving:
                         driving = True
                         fwd_action(arduino)
