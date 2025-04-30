@@ -99,7 +99,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     else:
                         fwd_dist = 0
                         
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist".format(left_distance, right_distance, steer, fwd_dist))
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}".format(left_distance, right_distance, steer, fwd_dist, driving))
 
                     # Decide on action based on sensor readings.
                     t_now = time.time()
