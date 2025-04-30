@@ -26,7 +26,6 @@ STEER_INCREMENT = 0.1
 # -------------------------------
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE   = 9600
-speed       = 150
 
 # LOAD CAMERA CALIBRATION
 with open('calib.yaml') as f:
@@ -80,6 +79,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
             send_command(arduino, f"SPEED {speed}")
             # Set initial servo position (straight ahead).
             servo.value = steer
+            t_0 = time.time()
             try:
                 while True:
                     # Read distances from both ultrasonic sensors.
@@ -101,21 +101,20 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist".format(left_distance, right_distance, steer, fwd_dist))
 
                     # Decide on action based on sensor readings.
-                    #if front_distance < THRESHOLD_DISTANCE_FWD:
-                     #   stop_action(arduino)
+                    t_now = time.time()
                     if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
                         driving = False
                         stop_action(arduino)
+                    elif (t_0 - t_now) < STEER_SLEEP_LEN: 
+                        pass
                     elif right_distance < THRESHOLD_DISTANCE_LR:
                         if(steer <= 1-STEER_INCREMENT):
                             steer += STEER_INCREMENT
                         servo.value = steer
-                        sleep(STEER_SLEEP_LEN)
                     elif left_distance < THRESHOLD_DISTANCE_LR:
                         if steer >= (-1+STEER_INCREMENT):
                             steer -= STEER_INCREMENT
                         servo.value = steer
-                        sleep(STEER_SLEEP_LEN)
                     elif not driving:
                         driving = True
                         fwd_action(arduino)
@@ -132,6 +131,9 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     cv.putText(frame_out,
                         f"steer: {steer: .2f} || speed: {speed}",
                         (20,90), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out,
+                        f"driving: {driving}",
+                        (20,120),cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
                     
                     edited_recording.write(frame_out)
             except KeyboardInterrupt:
