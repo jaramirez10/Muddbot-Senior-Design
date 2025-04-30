@@ -119,9 +119,17 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
 
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
+                    
                     cv.putText(frame_out,
-                        f"Closest: {fwd_dist:.2f} {'m' if odo_dist else 'units'} \n left_sensor: {left_distance: .2f} || right_sensor: {right_distance: .2f} \n steer: {steer: .2f} || driving: {driving}",
-                        (20,30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
+                        f"Closest: {fwd_dist:.2f} {'m' if odo_dist else 'units'}",
+                        (20,30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out, 
+                        f"left_sensor: {left_distance: .2f} || right_sensor: {right_distance: .2f}", 
+                        (20,60), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out,
+                        f"steer: {steer: .2f} || speed: {speed}",
+                        (20,90), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    
                     edited_recording.write(frame_out)
 
                     cv.imshow('Depth + Features', frame_out)
