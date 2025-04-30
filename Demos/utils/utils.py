@@ -107,3 +107,11 @@ def process_frame(raw,
 
 
     return raw, dists, gray, kp, des
+
+
+def startup(arduino, final_speed):
+    send_command(arduino, f"SPEED {final_speed+30}")
+    fwd_action(arduino)
+    sleep(0.2)
+    fwd_action(arduino, f"SPEED {final_speed}")
+    

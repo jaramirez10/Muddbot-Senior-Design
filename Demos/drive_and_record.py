@@ -18,7 +18,7 @@ right_sensor = DistanceSensor(echo=17, trigger=4)
 left_sensor  = DistanceSensor(echo=22, trigger=27)
 
 THRESHOLD_DISTANCE_LR = 0.05
-STEER_SLEEP_LEN = 0.1 # in seconds
+STEER_SLEEP_LEN = 1 # in seconds
 STEER_INCREMENT = 0.1
 SERVO_MAX = 0.5
 
@@ -69,7 +69,7 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
-speed = 70
+speed = 100
 steer = 0
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
@@ -77,8 +77,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
         time.sleep(0.1)  # Wait briefly for the serial port to initialize.
         if arduino.isOpen():
             print(f"{arduino.port} connected!")
-            # Set initial speed
-            send_command(arduino, f"SPEED {speed}")
+            startup(arduino, speed) # sets speed to {speed} after starting speed at {speed+30} for 0.2s
             # Set initial servo position (straight ahead).
             servo.value = steer
             t_0 = time.time()
@@ -106,6 +105,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
 
                     # Decide on action based on sensor readings.
                     t_now = time.time()
+                    print(f"\Delta t = {t_now - t_0}")
                     if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
                         print("stop")
                         driving = False
