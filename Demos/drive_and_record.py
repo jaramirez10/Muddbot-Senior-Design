@@ -34,9 +34,10 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
             print(f"{arduino.port} connected!")
             # Set initial speed
             send_command(arduino, f"SPEED {70}")
+            sleep(2)
             # Set initial servo position (straight ahead).
             send_command(arduino, "FORWARD")
-            sleep(1)
+            sleep(2)
             send_command(arduino, "STOP")
 """
 # LOAD CAMERA CALIBRATION
