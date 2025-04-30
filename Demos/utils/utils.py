@@ -110,12 +110,5 @@ def process_frame(raw,
     pts3d = (pts4d[:3] / pts4d[3]).T
     dists = np.linalg.norm(pts3d, axis=1)
 
-    # overlay min distance
-    if dists.size:
-        min_d = dists.min()
-        unit = 'm' if odo_dist else 'units'
-        cv.putText(raw,
-                   f"Closest: {min_d:.2f} {unit}",
-                   (20,30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
 
     return raw, dists, gray, kp, des
