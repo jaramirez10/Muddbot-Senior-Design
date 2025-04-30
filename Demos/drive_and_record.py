@@ -93,7 +93,10 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     # the rest are internal variables
                     frame_out, dists, prev_gray, kp_prev, des_prev = process_frame(
                     frame, prev_gray, kp_prev, des_prev, K, dist, orb, bf, odo_dist=None)
-                    fwd_dist = dists.min()
+                    if dists.size:
+                        fwd_dist = dists.min()
+                    else:
+                        fwd_dist = 0
                         
                     print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist".format(left_distance, right_distance, steer, fwd_dist))
 
@@ -119,7 +122,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
 
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
-                    
+
                     cv.putText(frame_out,
                         f"Closest: {fwd_dist:.2f} {'m' if odo_dist else 'units'}",
                         (20,30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
