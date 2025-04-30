@@ -51,7 +51,10 @@ if not cap.isOpened():
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
 size = (frame_width, frame_height)
-result = cv.VideoWriter('recording.avi',  
+clean_recording = cv.VideoWriter('clean_recording.avi',  
+                        cv.VideoWriter_fourcc(*'MJPG'), 
+                        10, size) 
+edited_recording = cv.VideoWriter('edited_recording.avi',  
                         cv.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
 
@@ -64,19 +67,77 @@ prev_gray = cv.cvtColor(first, cv.COLOR_BGR2GRAY)
 prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
-while True:
-    ret, frame = cap.read()
+driving = False
+speed = 0
+steer = 0
+print("Starting obstacle detection and motor drive loop...")
+# Open serial communication with Arduino.
+with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
+        time.sleep(0.1)  # Wait briefly for the serial port to initialize.
+        if arduino.isOpen():
+            print(f"{arduino.port} connected!")
+            # Set initial speed
+            send_command(arduino, f"SPEED {speed}")
+            # Set initial servo position (straight ahead).
+            servo.value = steer
+            try:
+                while True:
+                    # Read distances from both ultrasonic sensors.
+                    left_distance = left_sensor.distance   # in meters
+                    right_distance = right_sensor.distance # in meters
+                    #front_distance = front_sensor.distance # in meters
 
-    frame_out, dists, prev_gray, kp_prev, des_prev = process_frame(
-    frame, prev_gray, kp_prev, des_prev, K, dist, orb, bf, odo_dist=None)
+                    ret, frame = cap.read()
+                    # frame_out is the video frame (overlayed with the corners)
+                    # dists is the distances of all the corners
+                    # the rest are internal variables
+                    frame_out, dists, prev_gray, kp_prev, des_prev = process_frame(
+                    frame, prev_gray, kp_prev, des_prev, K, dist, orb, bf, odo_dist=None)
+                    fwd_dist = dists.min()
+                        
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist".format(left_distance, right_distance, steer, fwd_dist))
 
-    cv.imshow('Depth + Features', frame_out)
-    result.write(frame_out)
-    # break on ESC
-    if cv.waitKey(1) & 0xFF == 27:
-            break
+                    # Decide on action based on sensor readings.
+                    #if front_distance < THRESHOLD_DISTANCE_FWD:
+                     #   stop_action(arduino)
+                    if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
+                        driving = False
+                        stop_action(arduino)
+                    elif right_distance < THRESHOLD_DISTANCE_LR:
+                        if(steer <= 1-STEER_INCREMENT):
+                            steer += STEER_INCREMENT
+                        servo.value = steer
+                        sleep(STEER_SLEEP_LEN)
+                    elif left_distance < THRESHOLD_DISTANCE_LR:
+                        if steer >= (-1+STEER_INCREMENT):
+                            steer -= STEER_INCREMENT
+                        servo.value = steer
+                        sleep(STEER_SLEEP_LEN)
+                    elif not driving:
+                        driving = True
+                        fwd_action(arduino)
 
-print("Done!")
-result.release()
-cap.release()
-cv.destroyAllWindows()
+                    # edit video with relevant information:
+                    clean_recording.write(frame_out)
+                    cv.putText(frame_out,
+                        f"Closest: {fwd_dist:.2f} {'m' if odo_dist else 'units'} \n left_sensor: {left_distance: .2f} || right_sensor: {right_distance: .2f} \n steer: {steer: .2f} || driving: {driving}",
+                        (20,30), cv.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
+                    edited_recording.write(frame_out)
+
+                    cv.imshow('Depth + Features', frame_out)
+                    # break on ESC
+                    if cv.waitKey(1) & 0xFF == 27:
+                            break
+                    
+            except KeyboardInterrupt:
+                send_command(arduino, "STOP")
+                sleep(1)
+                print("KeyboardInterrupt caught, exiting.")
+            finally:            
+                print("Done!")
+                clean_recording.release()
+                edited_recording.release()
+                cap.release()
+                cv.destroyAllWindows()
+        else:
+            print("Arduino not connected.")
