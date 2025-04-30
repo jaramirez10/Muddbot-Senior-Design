@@ -67,7 +67,7 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
-speed = 0
+speed = 70
 steer = 0
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
