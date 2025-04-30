@@ -27,6 +27,18 @@ STEER_INCREMENT = 0.1
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE   = 9600
 
+
+with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
+        time.sleep(0.1)  # Wait briefly for the serial port to initialize.
+        if arduino.isOpen():
+            print(f"{arduino.port} connected!")
+            # Set initial speed
+            send_command(arduino, f"SPEED {70}")
+            # Set initial servo position (straight ahead).
+            send_command(arduino, "FORWARD")
+            sleep(1)
+            send_command(arduino, "STOP")
+"""
 # LOAD CAMERA CALIBRATION
 with open('calib.yaml') as f:
     data = yaml.safe_load(f)
@@ -158,3 +170,4 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                 cv.destroyAllWindows()
         else:
             print("Arduino not connected.")
+"""
