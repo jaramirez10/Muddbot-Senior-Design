@@ -31,6 +31,12 @@ def stop_action(arduino):
     """
     print("Obstacles detected on both sides. Stopping.")
     send_command(arduino, "STOP")
+    
+    while arduino.inWaiting()==0: pass
+    if  arduino.inWaiting()>0: 
+        answer=arduino.readline()
+        print(answer)
+        arduino.flushInput() #remove data after reading
     sleep(1)
 
 import cv2 as cv
