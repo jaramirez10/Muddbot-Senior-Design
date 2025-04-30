@@ -11,7 +11,6 @@ def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
     arduino.write((cmd).encode())
     print(f"Sent command:_{cmd}_")
-    
 
 
 def fwd_action(arduino):

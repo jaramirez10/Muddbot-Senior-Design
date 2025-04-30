@@ -20,6 +20,7 @@ left_sensor  = DistanceSensor(echo=22, trigger=27)
 THRESHOLD_DISTANCE_LR = 0.05
 STEER_SLEEP_LEN = 0.1 # in seconds
 STEER_INCREMENT = 0.1
+SERVO_MAX = 0.5
 
 # -------------------------------
 # Serial Communication Setup
@@ -115,13 +116,13 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         print("passed")
                     elif right_distance < THRESHOLD_DISTANCE_LR:
                         print("steer left")
-                        if(steer <= 1-STEER_INCREMENT):
+                        if(steer <= SERVO_MAX):
                             steer += STEER_INCREMENT
                         servo.value = steer
                         t_0 = t_now
                     elif left_distance < THRESHOLD_DISTANCE_LR:
                         print("steer right")
-                        if steer >= (-1+STEER_INCREMENT):
+                        if steer >= (-1*SERVO_MAX):
                             steer -= STEER_INCREMENT
                         servo.value = steer
                         t_0 = t_now
