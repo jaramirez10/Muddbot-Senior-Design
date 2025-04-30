@@ -67,7 +67,7 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
-speed = 120
+speed = 70
 steer = 0
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
@@ -104,22 +104,27 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     print("got here1")
                     t_now = time.time()
                     if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
+                        print("stop")
                         driving = False
                         stop_action(arduino)
                     elif (t_now - t_0) < STEER_SLEEP_LEN: 
+                        print("pass_pre")
                         pass
                         print("passed")
                     elif right_distance < THRESHOLD_DISTANCE_LR:
+                        print("steer left")
                         if(steer <= 1-STEER_INCREMENT):
                             steer += STEER_INCREMENT
                         servo.value = steer
                         t_0 = t_now
                     elif left_distance < THRESHOLD_DISTANCE_LR:
+                        print("steer right")
                         if steer >= (-1+STEER_INCREMENT):
                             steer -= STEER_INCREMENT
                         servo.value = steer
                         t_0 = t_now
                     elif not driving:
+                        print("start up")
                         driving = True
                         fwd_action(arduino)
 
