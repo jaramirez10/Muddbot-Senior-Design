@@ -4,7 +4,7 @@ import yaml
 import time
 import numpy as np
 from gpiozero import Servo, DistanceSensor,Device
-import pigpio
+from pigpio import PiGPIOFactory
 
 from time import sleep
 from utils.utils import *
