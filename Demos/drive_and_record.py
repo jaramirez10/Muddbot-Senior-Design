@@ -4,6 +4,7 @@ import yaml
 import time
 import numpy as np
 from gpiozero import Servo, DistanceSensor
+from gpiozero.pins.pigpio import PiGPIOFactory
 from time import sleep
 from utils.utils import *
 import serial
@@ -11,6 +12,8 @@ import serial
 # -------------------------------
 # Hardware Setup
 # -------------------------------
+Servo.pin_factory = PiGPIOFactory()
+DistanceSensor.pin_factory = PiGPIOFactory()
 servo = Servo(18)
 
 # Ultrasonic sensors
