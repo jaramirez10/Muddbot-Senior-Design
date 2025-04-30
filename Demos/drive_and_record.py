@@ -107,6 +107,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         stop_action(arduino)
                     elif (t_now - t_0) < STEER_SLEEP_LEN: 
                         pass
+                        print("passed")
                     elif right_distance < THRESHOLD_DISTANCE_LR:
                         if(steer <= 1-STEER_INCREMENT):
                             steer += STEER_INCREMENT
@@ -121,6 +122,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         driving = True
                         fwd_action(arduino)
 
+                    print("got here")
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
 
