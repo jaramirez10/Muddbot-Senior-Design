@@ -11,6 +11,11 @@ def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
     arduino.write((cmd).encode())
     print(f"Sent command:_{cmd}_")
+    while arduino.inWaiting()==0: pass
+    if  arduino.inWaiting()>0: 
+        answer=arduino.readline()
+        print(answer)
+        arduino.flushInput() #remove data after reading
 
 
 def fwd_action(arduino):
@@ -18,11 +23,6 @@ def fwd_action(arduino):
     With no obstacles, command the RC car to move forward.
     """
     send_command(arduino, "FORWARD")
-    while arduino.inWaiting()==0: pass
-    if  arduino.inWaiting()>0: 
-        answer=arduino.readline()
-        print(answer)
-        arduino.flushInput() #remove data after reading
 
 def stop_action(arduino):
     """
@@ -31,12 +31,6 @@ def stop_action(arduino):
     """
     print("Obstacles detected on both sides. Stopping.")
     send_command(arduino, "STOP")
-    
-    while arduino.inWaiting()==0: pass
-    if  arduino.inWaiting()>0: 
-        answer=arduino.readline()
-        print(answer)
-        arduino.flushInput() #remove data after reading
     sleep(1)
 
 import cv2 as cv
