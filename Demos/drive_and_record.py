@@ -10,10 +10,10 @@ import serial
 
 
 THRESHOLD_DISTANCE_LR = 40 #cm
-STEER_SLEEP_LEN = 0.5 # in seconds
-STEER_INCREMENT = 5 # degrees
-SERVO_MAX_L = 150
-SERVO_MAX_R = 30
+STEER_SLEEP_LEN = 1.5 # in seconds
+STEER_INCREMENT = 15 # degrees
+SERVO_MAX_L = 110
+SERVO_MAX_R = 70
 # -------------------------------
 # Serial Communication Setup
 # -------------------------------

@@ -10,9 +10,13 @@ import serial
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
     arduino.write((cmd).encode())
-    answer = arduino.readline().decode().strip()
-    arduino.reset_input_buffer()  # clear leftover data if any
-    return answer
+    try:
+        answer = arduino.readline().decode().strip()
+        arduino.reset_input_buffer()  # clear leftover data if any
+        return answer
+    except serial.SerialException as e:
+        print("Serial error:", e)
+        return "[-1 | -1]"
 
 def parse_sensor_prompt(answer):
     left_brack = answer.index("[")
