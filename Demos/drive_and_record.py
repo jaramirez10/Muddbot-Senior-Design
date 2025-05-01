@@ -3,31 +3,22 @@ import numpy as np
 import yaml
 import time
 import numpy as np
-from gpiozero import Servo, DistanceSensor
 
 from time import sleep
 from utils.utils import *
 import serial
 
-# -------------------------------
-# Hardware Setup
-# -------------------------------
-servo = Servo(18)
 
-# Ultrasonic sensors
-right_sensor = DistanceSensor(echo=17, trigger=4)
-left_sensor  = DistanceSensor(echo=22, trigger=27)
-
-THRESHOLD_DISTANCE_LR = 0.05
-STEER_SLEEP_LEN = 1 # in seconds
-STEER_INCREMENT = 0.1
-SERVO_MAX = 0.5
-
+THRESHOLD_DISTANCE_LR = 10 #cm
+STEER_SLEEP_LEN = 0.1 # in seconds
+STEER_INCREMENT = 10 # degrees
+SERVO_MAX_L = 150
+SERVO_MAX_R = 30
 # -------------------------------
 # Serial Communication Setup
 # -------------------------------
 SERIAL_PORT = "/dev/ttyACM0"
-BAUD_RATE   = 9600
+BAUD_RATE   = 115200
 
 
 # LOAD CAMERA CALIBRATION
@@ -71,25 +62,32 @@ kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
 speed = 70
-steer = 0
+steer = 90
+
+def forward():
+    send_command(arduino, "FORWARD")
+def stop():
+    send_command(arduino, "STOP")
+def setSpeed(speed):
+    send_command(arduino, f"SPEED {speed}")
+def setSteer(steer):
+    send_command(arduino, f"STEER {steer}")
+def getLRdists():
+    return parse_sensor_prompt(send_command(arduino, "SENSOR"))
+
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
 with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
         time.sleep(0.1)  # Wait briefly for the serial port to initialize.
         if arduino.isOpen():
             print(f"{arduino.port} connected!")
-            startup(arduino, speed) # sets speed to {speed} after starting speed at {speed+30} for 0.2s
             # Set initial servo position (straight ahead).
-            servo.value = steer
             t_0 = time.time()
-            fwd_action(arduino)
-            sleep(2)
+            setSpeed(speed)
+            forward()
             try:
                 while True:
-                    # Read distances from both ultrasonic sensors.
-                    left_distance = left_sensor.distance   # in meters
-                    right_distance = right_sensor.distance # in meters
-                    #front_distance = front_sensor.distance # in meters
+                    left_dist, right_dist = getLRdists() # in cm
 
                     ret, frame = cap.read()
                     # frame_out is the video frame (overlayed with the corners)
@@ -102,35 +100,30 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     else:
                         fwd_dist = 0
                         
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}".format(left_distance, right_distance, steer, fwd_dist, driving))
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}".format(left_dist, right_dist, steer, fwd_dist, driving))
 
                     # Decide on action based on sensor readings.
                     t_now = time.time()
                     print(f"delta t = {t_now - t_0}")
-                    if driving and (left_distance < THRESHOLD_DISTANCE_LR and right_distance < THRESHOLD_DISTANCE_LR):
-                        print("stop")
+                    if driving and (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR):
                         driving = False
-                        stop_action(arduino)
+                        stop()
                     elif (t_now - t_0) < STEER_SLEEP_LEN: 
-                        print("pass_pre")
                         pass
-                        print("passed")
-                    elif right_distance < THRESHOLD_DISTANCE_LR:
-                        print("steer left")
-                        if(steer <= SERVO_MAX):
+                    elif right_dist < THRESHOLD_DISTANCE_LR:
+                        if(steer <= SERVO_MAX_L):
                             steer += STEER_INCREMENT
-                        servo.value = steer
+                        setSteer(steer)
                         t_0 = t_now
-                    elif left_distance < THRESHOLD_DISTANCE_LR:
+                    elif left_dist < THRESHOLD_DISTANCE_LR:
                         print("steer right")
-                        if steer >= (-1*SERVO_MAX):
+                        if steer >= SERVO_MAX_R:
                             steer -= STEER_INCREMENT
-                        servo.value = steer
+                        setSteer(steer)
                         t_0 = t_now
                     elif not driving:
-                        print("start up")
                         driving = True
-                        fwd_action(arduino)
+                        forward()
                     else:
                         print("continue")
                     # edit video with relevant information:
@@ -140,7 +133,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         f"Closest: {fwd_dist:.2f} {'m' if odo_dist else 'units'}",
                         (20,30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
                     cv.putText(frame_out, 
-                        f"left_sensor: {left_distance: .2f} || right_sensor: {right_distance: .2f}", 
+                        f"left_sensor: {left_dist: .2f} || right_sensor: {right_dist: .2f}", 
                         (20,60), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
                     cv.putText(frame_out,
                         f"steer: {steer: .2f} || speed: {speed}",

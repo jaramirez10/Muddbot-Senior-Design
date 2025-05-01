@@ -10,23 +10,19 @@ import serial
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
     arduino.write((cmd).encode())
-    print(f"Sent command:_{cmd}_")
+    print(cmd)
+    answer = arduino.readline().decode().strip()
+    print(answer)
+    arduino.reset_input_buffer()  # clear leftover data if any
+    return answer
 
-
-def fwd_action(arduino):
-    """
-    With no obstacles, command the RC car to move forward.
-    """
-    send_command(arduino, "FORWARD")
-
-def stop_action(arduino):
-    """
-    If obstacles are detected on both sides,
-    choose a default action, such as stopping.
-    """
-    print("Obstacles detected on both sides. Stopping.")
-    send_command(arduino, "STOP")
-    sleep(1)
+def parse_sensor_prompt(answer):
+    left_brack = answer.index("[")
+    vbar = answer.index("|")
+    right_brack = answer.index("]")
+    left_dist = int(answer[left_brack+1:vbar])
+    right_dist = int(answer[vbar+1:right_brack])
+    return left_dist, right_dist
 
 import cv2 as cv
 import numpy as np
@@ -108,10 +104,4 @@ def process_frame(raw,
 
     return raw, dists, gray, kp, des
 
-
-def startup(arduino, final_speed):
-    send_command(arduino, f"SPEED {final_speed+30}")
-    fwd_action(arduino)
-    sleep(0.2)
-    send_command(arduino, f"SPEED {final_speed}")
     
