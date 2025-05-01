@@ -9,7 +9,7 @@ from utils.utils import *
 import serial
 
 
-THRESHOLD_DISTANCE_LR = 50 #cm
+THRESHOLD_DISTANCE_LR = 40 #cm
 STEER_SLEEP_LEN = 0.5 # in seconds
 STEER_INCREMENT = 5 # degrees
 SERVO_MAX_L = 150
@@ -102,7 +102,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         fwd_dist = 0
                         
                     t_now = time.time()
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}, delta t = {}".format(left_dist, right_dist, steer, fwd_dist, driving, (t_now - t_0)))
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}, delta t = {:.2f}".format(left_dist, right_dist, steer, fwd_dist, driving, (t_now - t_0)))
 
                     # Decide on action based on sensor readings.
                     if driving and (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR):
