@@ -16,11 +16,11 @@ if __name__ == '__main__':
                     cmd=input("Enter command : ")
                     arduino.write(cmd.encode())
                     print(f"Sent command:_{cmd}_")
-                    while arduino.inWaiting()==0: pass
-                    if  arduino.inWaiting()>0: 
-                        answer=arduino.readline()
-                        print(answer)
-                        arduino.flushInput() #remove data after reading
+                    
+                    answer = arduino.readline().decode().strip()
+                    print(f"Received: {answer}")
+                    
+                    arduino.reset_input_buffer()  # clear leftover data if any
             except KeyboardInterrupt:
                 print("KeyboardInterrupt has been caught.")
 
