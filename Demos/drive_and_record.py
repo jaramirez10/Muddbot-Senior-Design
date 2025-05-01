@@ -10,7 +10,7 @@ import serial
 
 
 THRESHOLD_DISTANCE_LR = 30 #cm
-STEER_SLEEP_LEN = 1 # in seconds
+STEER_SLEEP_LEN = 1.5 # in seconds
 STEER_INCREMENT = 7 # degrees
 SERVO_MAX_L = 150
 SERVO_MAX_R = 30
