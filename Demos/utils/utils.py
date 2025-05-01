@@ -10,9 +10,7 @@ import serial
 def send_command(arduino, cmd):
     """Send a command string to the Arduino over serial."""
     arduino.write((cmd).encode())
-    print(cmd)
     answer = arduino.readline().decode().strip()
-    print(answer)
     arduino.reset_input_buffer()  # clear leftover data if any
     return answer
 

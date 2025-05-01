@@ -9,7 +9,7 @@ from utils.utils import *
 import serial
 
 
-THRESHOLD_DISTANCE_LR = 10 #cm
+THRESHOLD_DISTANCE_LR = 30 #cm
 STEER_SLEEP_LEN = 0.1 # in seconds
 STEER_INCREMENT = 10 # degrees
 SERVO_MAX_L = 150
