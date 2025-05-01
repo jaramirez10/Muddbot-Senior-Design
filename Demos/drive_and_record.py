@@ -10,8 +10,8 @@ import serial
 
 
 THRESHOLD_DISTANCE_LR = 30 #cm
-STEER_SLEEP_LEN = 0.1 # in seconds
-STEER_INCREMENT = 10 # degrees
+STEER_SLEEP_LEN = 0.5 # in seconds
+STEER_INCREMENT = 7 # degrees
 SERVO_MAX_L = 150
 SERVO_MAX_R = 30
 # -------------------------------
@@ -82,6 +82,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
         if arduino.isOpen():
             print(f"{arduino.port} connected!")
             # Set initial servo position (straight ahead).
+            t_init = time.time()
             t_0 = time.time()
             setSpeed(speed)
             forward()
@@ -139,6 +140,10 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     cv.putText(frame_out,
                         f"driving: {driving}",
                         (20,120),cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out,
+                        f"time elapsed: {t_now - t_init}",
+                        (20,150),cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    
                     
                     edited_recording.write(frame_out)
             except KeyboardInterrupt:
