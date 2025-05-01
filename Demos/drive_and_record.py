@@ -100,11 +100,10 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     else:
                         fwd_dist = 0
                         
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}".format(left_dist, right_dist, steer, fwd_dist, driving))
+                    t_now = time.time()
+                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}, delta t = {}".format(left_dist, right_dist, steer, fwd_dist, driving, (t_now - t_0)))
 
                     # Decide on action based on sensor readings.
-                    t_now = time.time()
-                    print(f"delta t = {t_now - t_0}")
                     if driving and (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR):
                         driving = False
                         stop()
@@ -124,8 +123,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     elif not driving:
                         driving = True
                         forward()
-                    else:
-                        print("continue")
+
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
 
