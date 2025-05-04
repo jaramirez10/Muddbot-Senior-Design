@@ -10,8 +10,8 @@ import serial
 
 
 THRESHOLD_DISTANCE_LR = 40 #cm
-THRESHOLD_DISTANCE_FWD = 30 #cm
-STEER_SLEEP_LEN = 1.5 # in seconds
+THRESHOLD_DISTANCE_FWD = 50 #cm
+STEER_SLEEP_LEN = 2.5 # in seconds
 STEER_INCREMENT = 15 # degrees
 SERVO_MAX_L = 110
 SERVO_MAX_R = 70
@@ -62,7 +62,7 @@ prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
 driving = False
-speed = 70
+speed = 100
 steer = 90
 
 def forward():
