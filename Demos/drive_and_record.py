@@ -10,7 +10,7 @@ import serial
 
 
 THRESHOLD_DISTANCE_LR = 40 #cm
-THRESHOLD_DISTANCE_FWD = 40 #cm
+THRESHOLD_DISTANCE_FWD = 30 #cm
 STEER_SLEEP_LEN = 1.5 # in seconds
 STEER_INCREMENT = 15 # degrees
 SERVO_MAX_L = 110
@@ -101,23 +101,29 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     t_now = time.time()
                     print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}, delta t = {:.2f}".format(left_dist, right_dist, steer, fwd_dist, driving, (t_now - t_0)))
 
+
+                    
+                
                     # Decide on action based on sensor readings.
                     if driving and (fwd_dist < THRESHOLD_DISTANCE_FWD or (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR)):
                         driving = False
                         stop()
-                    elif (t_now - t_0) < STEER_SLEEP_LEN: 
-                        pass
-                    elif right_dist < THRESHOLD_DISTANCE_LR:
-                        if(steer <= SERVO_MAX_L):
-                            steer += STEER_INCREMENT
-                        setSteer(steer)
-                        t_0 = t_now
-                    elif left_dist < THRESHOLD_DISTANCE_LR:
-                        print("steer right")
-                        if steer >= SERVO_MAX_R:
-                            steer -= STEER_INCREMENT
-                        setSteer(steer)
-                        t_0 = t_now
+                    elif (t_now - t_0) > STEER_SLEEP_LEN:  # it is amenable to turn now
+                        if right_dist < THRESHOLD_DISTANCE_LR:
+                            if(steer <= SERVO_MAX_L):
+                                steer += STEER_INCREMENT
+                            setSteer(steer)
+                            t_0 = t_now
+                        elif left_dist < THRESHOLD_DISTANCE_LR:
+                            print("steer right")
+                            if steer >= SERVO_MAX_R:
+                                steer -= STEER_INCREMENT
+                            setSteer(steer)
+                            t_0 = t_now
+                        elif steer != 90:
+                            print("setting course straight")
+                            steer = 90
+                            setSteer(steer)
                     elif not driving:
                         driving = True
                         forward()
