@@ -10,6 +10,7 @@ import serial
 
 
 THRESHOLD_DISTANCE_LR = 40 #cm
+THRESHOLD_DISTANCE_FWD = 40 #cm
 STEER_SLEEP_LEN = 1.5 # in seconds
 STEER_INCREMENT = 15 # degrees
 SERVO_MAX_L = 110
@@ -72,7 +73,7 @@ def setSpeed(speed):
     send_command(arduino, f"SPEED {speed}")
 def setSteer(steer):
     send_command(arduino, f"STEER {steer}")
-def getLRdists():
+def getLFRdists():
     return parse_sensor_prompt(send_command(arduino, "SENSOR"))
 
 print("Starting obstacle detection and motor drive loop...")
@@ -88,7 +89,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
             forward()
             try:
                 while True:
-                    left_dist, right_dist = getLRdists() # in cm
+                    left_dist, fwd_dist, right_dist = getLFRdists() # in cm
 
                     ret, frame = cap.read()
                     # frame_out is the video frame (overlayed with the corners)
@@ -96,16 +97,12 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     # the rest are internal variables
                     frame_out, dists, prev_gray, kp_prev, des_prev = process_frame(
                     frame, prev_gray, kp_prev, des_prev, K, dist, orb, bf, odo_dist=None)
-                    if dists.size:
-                        fwd_dist = dists.min()
-                    else:
-                        fwd_dist = 0
                         
                     t_now = time.time()
                     print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}, delta t = {:.2f}".format(left_dist, right_dist, steer, fwd_dist, driving, (t_now - t_0)))
 
                     # Decide on action based on sensor readings.
-                    if driving and (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR):
+                    if driving and (fwd_dist < THRESHOLD_DISTANCE_FWD or (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR)):
                         driving = False
                         stop()
                     elif (t_now - t_0) < STEER_SLEEP_LEN: 
@@ -129,10 +126,10 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     clean_recording.write(frame_out)
 
                     cv.putText(frame_out,
-                        f"Closest: {fwd_dist:.2f} {'m' if odo_dist else 'units'}",
+                        f"forward_sensor: {fwd_dist:.2f} cm",
                         (20,30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
                     cv.putText(frame_out, 
-                        f"left_sensor: {left_dist: .2f} || right_sensor: {right_dist: .2f}", 
+                        f"left_sensor: {left_dist: .2f} cm|| right_sensor: {right_dist: .2f} cm", 
                         (20,60), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
                     cv.putText(frame_out,
                         f"steer: {steer: .2f} || speed: {speed}",

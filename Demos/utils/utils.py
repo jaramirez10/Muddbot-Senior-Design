@@ -16,11 +16,13 @@ def send_command(arduino, cmd):
 
 def parse_sensor_prompt(answer):
     left_brack = answer.index("[")
-    vbar = answer.index("|")
+    lbar = answer.index("/")
+    rbar = answer.index("\\")
     right_brack = answer.index("]")
-    left_dist = int(answer[left_brack+1:vbar])
-    right_dist = int(answer[vbar+1:right_brack])
-    return left_dist, right_dist
+    left_dist = int(answer[left_brack+1:lbar])
+    fwd_dist = int(answer[lbar+1:rbar])
+    right_dist = int(answer[rbar+1:right_brack])
+    return left_dist, fwd_dist, right_dist
 
 import cv2 as cv
 import numpy as np
