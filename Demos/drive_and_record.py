@@ -172,12 +172,12 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                             steer = steer + SUBTLE_STEER_INCR
                             setSteer(steer)
                             l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
+                        else:
+                            print("just keep swimmin\'")
                     elif not driving:
                         driving = True
                         forward()
                         print("start driving again")
-                    else:
-                        print("just keep swimmin\'")
 
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
