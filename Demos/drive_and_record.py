@@ -161,14 +161,13 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                         setSteer(steer)
                         urgent_steering = True
                         t_0 = t_now
-                    elif driving and not urgent_steering and left_dist < LR_THRESH_SUBTLE:
-                        if drifting(l_dists, l_dists_num_elements):
+                    elif driving and not urgent_steering:
+                        if left_dist < LR_THRESH_SUBTLE and drifting(l_dists, l_dists_num_elements):
                             print("subtle steering right due to left drift")
                             steer = steer - SUBTLE_STEER_INCR
                             setSteer(steer)
                             l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
-                    elif driving and not urgent_steering and right_dist < LR_THRESH_SUBTLE:
-                        if drifting(r_dists, r_dists_num_elements):
+                        elif right_dist < LR_THRESH_SUBTLE and drifting(r_dists, r_dists_num_elements):
                             print("subtle steering left due to right drift")
                             steer = steer + SUBTLE_STEER_INCR
                             setSteer(steer)
