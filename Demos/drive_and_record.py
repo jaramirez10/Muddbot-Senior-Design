@@ -15,8 +15,8 @@ LR_THRESH_SUBTLE = 100 #cm
 
 URGENT_STEER_LEN = 1.0 # in seconds
 URGENT_STEER_VAL = 15 # degrees
-SUBTLE_STEER_INCR = 10 # degrees
-SUBTLE_STEER_ARR_LEN = 5 # array length
+SUBTLE_STEER_INCR = 5 # degrees
+SUBTLE_STEER_ARR_LEN = 15 # array length
 SUBTLE_STEER_DRIFT_THRESH = 5 #cm
 # -------------------------------
 # Serial Communication Setup
@@ -174,10 +174,12 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                             l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
                         else:
                             print("just keep swimmin\'")
-                    elif not driving:
+                    elif not driving and not (fwd_dist < FWD_THRESH or (left_dist < LR_THRESH_URGENT and right_dist < LR_THRESH_URGENT)):
                         driving = True
                         forward()
                         print("start driving again")
+                    else:
+                        print("staying stopped")
 
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
