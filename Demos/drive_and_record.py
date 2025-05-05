@@ -15,7 +15,7 @@ LR_THRESH_SUBTLE = 100 #cm
 
 URGENT_STEER_LEN = 1.0 # in seconds
 URGENT_STEER_VAL = 15 # degrees
-SUBTLE_STEER_INCR = 5 # degrees
+SUBTLE_STEER_INCR = 8 # degrees
 SUBTLE_STEER_ARR_LEN = 9 # array length
 SUBTLE_STEER_DRIFT_THRESH = 5 #cm
 # -------------------------------
@@ -107,7 +107,7 @@ def drifting(lr_dists, lr_dists_num_elements):
 l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
 
 driving = False
-speed = 100
+speed = 80
 steer = 90
 urgent_steering = False
 
