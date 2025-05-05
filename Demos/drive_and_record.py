@@ -143,6 +143,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     if driving and (fwd_dist < FWD_THRESH or (left_dist < LR_THRESH_URGENT and right_dist < LR_THRESH_URGENT)):
                         driving = False
                         stop()
+                        print("obstacle encountered -- STOPPING")
                     elif driving and urgent_steering and (t_now - t_0) > URGENT_STEER_LEN:  # it is amenable to turn now
                         print("setting course straight")
                         steer = 90
@@ -175,6 +176,9 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     elif not driving:
                         driving = True
                         forward()
+                        print("start driving again")
+                    else:
+                        print("just keep swimmin\'")
 
                     # edit video with relevant information:
                     clean_recording.write(frame_out)
