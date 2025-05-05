@@ -9,12 +9,15 @@ from utils.utils import *
 import serial
 
 
-THRESHOLD_DISTANCE_LR = 40 #cm
-THRESHOLD_DISTANCE_FWD = 50 #cm
-STEER_SLEEP_LEN = 2.5 # in seconds
-STEER_INCREMENT = 15 # degrees
-SERVO_MAX_L = 110
-SERVO_MAX_R = 70
+FWD_THRESH = 50 #cm
+LR_THRESH_URGENT = 20 #cm
+LR_THRESH_SUBTLE = 100 #cm
+
+URGENT_STEER_LEN = 1.0 # in seconds
+URGENT_STEER_VAL = 15 # degrees
+SUBTLE_STEER_INCR = 10
+SUBTLE_STEER_ARR_LEN = 5
+
 # -------------------------------
 # Serial Communication Setup
 # -------------------------------
@@ -61,9 +64,7 @@ prev_gray = cv.cvtColor(first, cv.COLOR_BGR2GRAY)
 prev_gray = cv.undistort(prev_gray, K, dist)
 kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
-driving = False
-speed = 100
-steer = 90
+
 
 def forward():
     send_command(arduino, "FORWARD")
@@ -75,6 +76,40 @@ def setSteer(steer):
     send_command(arduino, f"STEER {steer}")
 def getLFRdists():
     return parse_sensor_prompt(send_command(arduino, "SENSOR"))
+
+def LR_dist_arrays(left_dist, right_dist):
+    l_dists = np.roll(l_dists, 1)
+    r_dists = np.roll(r_dists, 1)
+    l_dists[0] = left_dist
+    r_dists[0] = right_dist
+    l_dists_num_elements = l_dists_num_elements + 1 if l_dists_num_elements < SUBTLE_STEER_ARR_LEN else SUBTLE_STEER_ARR_LEN
+    r_dists_num_elements = r_dists_num_elements + 1 if r_dists_num_elements < SUBTLE_STEER_ARR_LEN else SUBTLE_STEER_ARR_LEN
+    return l_dists, r_dists, l_dists_num_elements, r_dists_num_elements
+
+def flush_LR_dist_arrays():
+    l_dists = np.array([-1 for _ in range(SUBTLE_STEER_ARR_LEN)])
+    r_dists = np.array([-1 for _ in range(SUBTLE_STEER_ARR_LEN)])
+    l_dists_num_elements = 0
+    r_dists_num_elements = 0
+    return l_dists, r_dists, l_dists_num_elements, r_dists_num_elements
+
+def drifting(lr_dists, lr_dists_num_elements):
+    if lr_dists_num_elements < SUBTLE_STEER_ARR_LEN:
+        return False
+    elif lr_dists[0] > lr_dists[lr_dists_num_elements - 1]:
+        return False
+    else:
+        for i in (1 + range(lr_dists_num_elements - 1)):
+            if lr_dists[i] < lr_dists[i-1]:
+                return False
+        return True
+
+l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
+
+driving = False
+speed = 100
+steer = 90
+urgent_steering = False
 
 print("Starting obstacle detection and motor drive loop...")
 # Open serial communication with Arduino.
@@ -90,6 +125,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
             try:
                 while True:
                     left_dist, fwd_dist, right_dist = getLFRdists() # in cm
+                    l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = LR_dist_arrays(left_dist, right_dist)
 
                     ret, frame = cap.read()
                     # frame_out is the video frame (overlayed with the corners)
@@ -99,31 +135,43 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
                     frame, prev_gray, kp_prev, des_prev, K, dist, orb, bf, odo_dist=None)
                         
                     t_now = time.time()
-                    print("Left distance: {:.2f} m, Right distance: {:.2f} m, Steer: {:.2f}, fwd_dist {:.2f}, driving: {}, delta t = {:.2f}".format(left_dist, right_dist, steer, fwd_dist, driving, (t_now - t_0)))
-
-
-                    
+                    print("Left distance: {:.2f} cm, fwd_dist {:.2f} cm, Right distance: {:.2f} cm, Steer: {:.2f},  driving: {}, delta t = {:.2f}".format(left_dist, fwd_dist, right_dist, steer, driving, (t_now - t_0)))
+                    print(f"l_dists_num_elements: {l_dists_num_elements} -- l_dists: {l_dists} -- drift? {drifting(l_dists, l_dists_num_elements)}")
+                    print(f"r_dists_num_elements: {l_dists_num_elements} -- r_dists: {r_dists} -- drift? {drifting(r_dists, r_dists_num_elements)}")
                 
                     # Decide on action based on sensor readings.
-                    if driving and (fwd_dist < THRESHOLD_DISTANCE_FWD or (left_dist < THRESHOLD_DISTANCE_LR and right_dist < THRESHOLD_DISTANCE_LR)):
+                    if driving and (fwd_dist < FWD_THRESH or (left_dist < LR_THRESH_URGENT and right_dist < LR_THRESH_URGENT)):
                         driving = False
                         stop()
-                    elif (t_now - t_0) > STEER_SLEEP_LEN:  # it is amenable to turn now
-                        if right_dist < THRESHOLD_DISTANCE_LR:
-                            if(steer <= SERVO_MAX_L):
-                                steer += STEER_INCREMENT
+                    elif driving and urgent_steering and (t_now - t_0) > URGENT_STEER_LEN:  # it is amenable to turn now
+                        print("setting course straight")
+                        steer = 90
+                        setSteer(steer)
+                        urgent_steering = False
+                    elif driving and not urgent_steering and left_dist < LR_THRESH_URGENT:
+                        print("urgently steering right")
+                        steer = 90 - URGENT_STEER_VAL
+                        setSteer(steer)
+                        urgent_steering = True
+                        t_0 = t_now
+                    elif driving and not urgent_steering and right_dist < LR_THRESH_URGENT:
+                        print("urgently steering left")
+                        steer = 90 + URGENT_STEER_VAL
+                        setSteer(steer)
+                        urgent_steering = True
+                        t_0 = t_now
+                    elif driving and not urgent_steering and left_dist < LR_THRESH_SUBTLE:
+                        if drifting(l_dists, l_dists_num_elements):
+                            print("subtle steering right due to left drift")
+                            steer = steer - SUBTLE_STEER_INCR
                             setSteer(steer)
-                            t_0 = t_now
-                        elif left_dist < THRESHOLD_DISTANCE_LR:
-                            print("steer right")
-                            if steer >= SERVO_MAX_R:
-                                steer -= STEER_INCREMENT
+                            l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
+                    elif driving and not urgent_steering and right_dist < LR_THRESH_SUBTLE:
+                        if drifting(r_dists, r_dists_num_elements):
+                            print("subtle steering left due to right drift")
+                            steer = steer + SUBTLE_STEER_INCR
                             setSteer(steer)
-                            t_0 = t_now
-                        elif steer != 90:
-                            print("setting course straight")
-                            steer = 90
-                            setSteer(steer)
+                            l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
                     elif not driving:
                         driving = True
                         forward()
