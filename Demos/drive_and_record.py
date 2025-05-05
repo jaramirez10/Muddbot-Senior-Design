@@ -99,8 +99,8 @@ def drifting(lr_dists, lr_dists_num_elements):
     elif lr_dists[0] > lr_dists[lr_dists_num_elements - 1]:
         return False
     else:
-        for i in (1 + range(lr_dists_num_elements - 1)):
-            if lr_dists[i] < lr_dists[i-1]:
+        for i in range(lr_dists_num_elements - 1):
+            if lr_dists[i+1] < lr_dists[i]:
                 return False
         return True
 
