@@ -10,7 +10,7 @@ import serial
 
 
 FWD_THRESH = 50 #cm
-LR_THRESH_URGENT = 20 #cm
+LR_THRESH_URGENT = 40 #cm
 LR_THRESH_SUBTLE = 100 #cm
 
 URGENT_STEER_LEN = 1.0 # in seconds
