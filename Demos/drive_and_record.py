@@ -96,7 +96,7 @@ def flush_LR_dist_arrays():
 def drifting(lr_dists, lr_dists_num_elements):
     if lr_dists_num_elements < SUBTLE_STEER_ARR_LEN:
         return False
-    elif lr_dists[0] > lr_dists[lr_dists_num_elements - 1]:
+    elif lr_dists[0] >= lr_dists[lr_dists_num_elements - 1]:
         return False
     else:
         for i in range(lr_dists_num_elements - 1):
