@@ -77,7 +77,7 @@ def setSteer(steer):
 def getLFRdists():
     return parse_sensor_prompt(send_command(arduino, "SENSOR"))
 
-def LR_dist_arrays(left_dist, right_dist):
+def LR_dist_arrays(left_dist, right_dist, l_dists, r_dists, l_dists_num_elements, r_dists_num_elements):
     l_dists = np.roll(l_dists, 1)
     r_dists = np.roll(r_dists, 1)
     l_dists[0] = left_dist
@@ -125,7 +125,7 @@ with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
             try:
                 while True:
                     left_dist, fwd_dist, right_dist = getLFRdists() # in cm
-                    l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = LR_dist_arrays(left_dist, right_dist)
+                    l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = LR_dist_arrays(left_dist, right_dist, l_dists, r_dists, l_dists_num_elements, r_dists_num_elements)
 
                     ret, frame = cap.read()
                     # frame_out is the video frame (overlayed with the corners)
