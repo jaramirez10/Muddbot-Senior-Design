@@ -91,7 +91,6 @@ try:
         # --- Morphological Opening (remove small specks) ---
         kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
         mask_open = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_open)
-        cv2.imshow("mask_open", mask_open)
         
         # --- Morphological Closing (fill small holes) ---
         kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
