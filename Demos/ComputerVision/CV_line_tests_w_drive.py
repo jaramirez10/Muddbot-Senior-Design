@@ -58,7 +58,7 @@ ret, first = cap.read()
 h, w = first.shape[:2]
 roi_first = first[y_0:h, x_left:x_right].copy()
 
-cropped_size = roi_first.shape[:2]
+cropped_size = (roi_first.shape[1], roi_first.shape[0])  # (width, height)
                 
 clean_recording = cv2.VideoWriter('clean.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
