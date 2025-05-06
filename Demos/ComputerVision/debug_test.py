@@ -1,149 +1,256 @@
-#!/usr/bin/env python3
-import cv2
+import cv2 as cv
 import numpy as np
-import serial
+import yaml
 import time
-from time import sleep
+import numpy as np
 
+from time import sleep
+from utils.utils import *
+import serial
+
+
+FWD_THRESH = 50 #cm
+LR_THRESH_URGENT = 40 #cm
+LR_THRESH_SUBTLE = 100 #cm
+
+URGENT_STEER_LEN = 1.0 # in seconds
+URGENT_STEER_VAL = 15 # degrees
+SUBTLE_STEER_INCR = 8 # degrees
+SUBTLE_STEER_ARR_LEN = 9 # array length
+SUBTLE_STEER_DRIFT_THRESH = 5 #cm
+SUBTLE_STEER_LEN = 0.5 # in seconds
 # -------------------------------
-# Arduino / Motor Control Setup
+# Serial Communication Setup
 # -------------------------------
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE   = 115200
 
-arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-time.sleep(0.1)
 
-def send_cmd(cmd: str):
-    """Send cmd and print it for debug."""
-    arduino.write(cmd.encode())
-    print(f"[ARDUINO] → {cmd}")
+# LOAD CAMERA CALIBRATION
+with open('calib.yaml') as f:
+    data = yaml.safe_load(f)
+K    = np.array(data['K'])
+dist = np.array(data['dist'])
 
-def forward():
-    send_cmd("FORWARD")
+# odo_dist = 0.05  # example: car moved 5 cm between frames
+odo_dist = None
 
-def stop():
-    send_cmd("STOP")
 
-def setSpeed(speed: int):
-    send_cmd(f"SPEED {speed}")
+# FEATURE DETECTOR & MATCHER 
+orb = cv.ORB_create(2000)
+bf  = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=False)
 
-def setSteer(steer: int):
-    send_cmd(f"STEER {steer}")
-
-# -------------------------------
-# Camera & Logging Setup
-# -------------------------------
-cap = cv2.VideoCapture(0)
+# START VIDEO STREAM 
+cap = cv.VideoCapture(0)
 if not cap.isOpened():
     raise RuntimeError("Cannot open camera")
 
-# lower res for speed
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-# video writers: clean ROI on left, debug overlay on right
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-clean_out = cv2.VideoWriter('clean.avi', fourcc, 15, (w, int(h//2)))
-debug_out = cv2.VideoWriter('debug.avi', fourcc, 15, (w, h))
+frame_width = int(cap.get(3))
+frame_height = int(cap.get(4))
+size = (frame_width, frame_height)
+clean_recording = cv.VideoWriter('clean_recording.avi',  
+                        cv.VideoWriter_fourcc(*'MJPG'), 
+                        10, size) 
+edited_recording = cv.VideoWriter('edited_recording.avi',  
+                        cv.VideoWriter_fourcc(*'MJPG'), 
+                        10, size) 
+contour_recording = cv.VideoWriter('contour_recording.avi',
+                        cv.VideoWriter_fourcc(*'MJPG'),
+                        10, size)
 
-# -------------------------------
-# Line-Follower Params
-# -------------------------------
-SPEED           = 70
-STEER_CENTER    = 90
-Kp              = 0.3
-STEER_LEFT_MAX  = 110
-STEER_RIGHT_MAX =  70
 
-THRESH_VAL      = 60
-lost_counter    = 0
-LOST_THRESHOLD  = 10
-ROI_Y_START     = 0.5
+# Read first frame
+ret, first = cap.read()
+if not ret:
+    raise RuntimeError("Cannot read first frame")
+prev_gray = cv.cvtColor(first, cv.COLOR_BGR2GRAY)
+prev_gray = cv.undistort(prev_gray, K, dist)
+kp_prev, des_prev = orb.detectAndCompute(prev_gray, None)
 
-# initialize
-setSpeed(SPEED)
-forward()
-sleep(0.2)
 
-try:
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
 
-        # draw ROI box on full frame
-        y0 = int(h * ROI_Y_START)
-        cv2.rectangle(frame, (0,y0), (w,h), (255,0,0), 2)
+def forward():
+    send_command(arduino, "FORWARD")
+def stop():
+    send_command(arduino, "STOP")
+def setSpeed(speed):
+    send_command(arduino, f"SPEED {speed}")
+def setSteer(steer):
+    send_command(arduino, f"STEER {steer}")
+def getLFRdists():
+    return parse_sensor_prompt(send_command(arduino, "SENSOR"))
 
-        # crop ROI
-        roi = frame[y0:h, :]
+def LR_dist_arrays(left_dist, right_dist, l_dists, r_dists, l_dists_num_elements, r_dists_num_elements):
+    # keeps track of the last 'SUBTLE_STEER_ARR_LEN' distances on the left and right respectively.
+    # the most recent distance is at idx 0
+    l_dists = np.roll(l_dists, 1)
+    r_dists = np.roll(r_dists, 1)
+    l_dists[0] = left_dist
+    r_dists[0] = right_dist
+    # keeps track of the number of elements currently recorded
+    l_dists_num_elements = l_dists_num_elements + 1 if l_dists_num_elements < SUBTLE_STEER_ARR_LEN else SUBTLE_STEER_ARR_LEN
+    r_dists_num_elements = r_dists_num_elements + 1 if r_dists_num_elements < SUBTLE_STEER_ARR_LEN else SUBTLE_STEER_ARR_LEN
+    return l_dists, r_dists, l_dists_num_elements, r_dists_num_elements
 
-        # 1) preprocess
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(gray, (5,5), 0)
+def flush_LR_dist_arrays():
+    # 'zeros' the whole array. -1 is a good value since all positive values are greater than -1, so drift is not detected while the array is not full
+    l_dists = np.array([-1 for _ in range(SUBTLE_STEER_ARR_LEN)])
+    r_dists = np.array([-1 for _ in range(SUBTLE_STEER_ARR_LEN)])
+    l_dists_num_elements = 0
+    r_dists_num_elements = 0
+    return l_dists, r_dists, l_dists_num_elements, r_dists_num_elements
 
-        # 2) threshold
-        _, mask = cv2.threshold(blur, THRESH_VAL, 255, cv2.THRESH_BINARY_INV)
+def drifting(lr_dists, lr_dists_num_elements):
+    # if the array is filled, and there's been monotonic decrease in distance by more than 5 cm over the last SUBTLE_STEER_ARR_LEN values
+    if lr_dists_num_elements < SUBTLE_STEER_ARR_LEN:
+        return False
+    elif lr_dists[0] + 5 >= lr_dists[lr_dists_num_elements - 1]:
+        return False
+    else:
+        for i in range(lr_dists_num_elements - 1):
+            if lr_dists[i+1] < lr_dists[i]:
+                return False
+        return True
 
-        # 3) morphology
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
 
-        # 4) contours
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        debug = roi.copy()
-        if contours:
-            lost_counter = 0
-            c = max(contours, key=cv2.contourArea)
-            M = cv2.moments(c)
-            if M["m00"]>0:
-                cx = int(M["m10"]/M["m00"])
-                cy = int(M["m01"]/M["m00"])
-                # draw contour + centroid
-                cv2.drawContours(debug, [c], -1, (0,255,0), 2)
-                cv2.circle(debug, (cx, cy), 5, (0,0,255), -1)
-                # steering
-                error = cx - (w/2)
-                steer = int(STEER_CENTER - Kp * error)
-                steer = max(min(steer, STEER_LEFT_MAX), STEER_RIGHT_MAX)
-                setSteer(steer)
-                forward()
-                # draw arrow
-                arrow_end = (int(w/2 - Kp*error), cy)
-                cv2.arrowedLine(debug, (w//2, cy), arrow_end, (255,0,0), 2)
-                cv2.putText(debug, f"err={error:.1f}", (10,20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255),1)
-                cv2.putText(debug, f"steer={steer}", (10,40),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255),1)
+driving = False
+speed = 80
+steer = 90
+urgent_steering = False
+subtle_steering = False
+
+print("Starting obstacle detection and motor drive loop...")
+# Open serial communication with Arduino.
+with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as arduino:
+        time.sleep(0.1)  # Wait briefly for the serial port to initialize.
+        if arduino.isOpen():
+            print(f"{arduino.port} connected!")
+            # Set initial servo position (straight ahead).
+            t_init = time.time()
+            t_0 = time.time()
+            setSpeed(speed)
+            forward()
+            try:
+                while True:
+                    left_dist, fwd_dist, right_dist = getLFRdists() # in cm
+                    l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = LR_dist_arrays(left_dist, right_dist, l_dists, r_dists, l_dists_num_elements, r_dists_num_elements)
+
+                    ret, frame = cap.read()
+                    # frame_out is the video frame (overlayed with the corners)
+                    # dists is the distances of all the corners
+                    # the rest are internal variables
+                    # Create contour mask frame
+                    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                    blurred = cv.GaussianBlur(gray, (5, 5), 0)
+                    _, thresh = cv.threshold(blurred, 60, 255, cv.THRESH_BINARY_INV)  # Invert if needed
+                    contours, _ = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+
+                    # Create a blank black frame
+                    contour_frame = np.zeros_like(frame)
+
+                    # Draw contours on black background
+                    cv.drawContours(contour_frame, contours, -1, (0, 255, 0), 2)
+
+                    # Save the contour video
+                    contour_recording.write(contour_frame)
+
+                    frame_out, dists, prev_gray, kp_prev, des_prev = process_frame(
+                    frame, prev_gray, kp_prev, des_prev, K, dist, orb, bf, odo_dist=None)
+                        
+                    t_now = time.time()
+                    print("Left distance: {:.2f} cm, fwd_dist {:.2f} cm, Right distance: {:.2f} cm, Steer: {:.2f},  driving: {}, delta t = {:.2f}".format(left_dist, fwd_dist, right_dist, steer, driving, (t_now - t_0)))
+                    print(f"l_dists_num_elements: {l_dists_num_elements} -- l_dists: {l_dists} -- drift? {drifting(l_dists, l_dists_num_elements)}")
+                    print(f"r_dists_num_elements: {l_dists_num_elements} -- r_dists: {r_dists} -- drift? {drifting(r_dists, r_dists_num_elements)}")
+                
+                    # Decide on action based on sensor readings.
+                    # these actions should be pretty legible based on the python code
+                    if driving and (fwd_dist < FWD_THRESH or (left_dist < LR_THRESH_URGENT and right_dist < LR_THRESH_URGENT)):
+                        driving = False
+                        stop()
+                        print("obstacle encountered -- STOPPING")
+                    elif driving and urgent_steering and (t_now - t_0) > URGENT_STEER_LEN:  # it is amenable to turn now
+                        print("setting course straight")
+                        steer = 90
+                        setSteer(steer)
+                        urgent_steering = False
+                        subtle_steering = False
+                    elif driving and not urgent_steering and left_dist < LR_THRESH_URGENT:
+                        print("urgently steering right")
+                        steer = 90 - URGENT_STEER_VAL
+                        setSteer(steer)
+                        urgent_steering = True
+                        subtle_steering = False
+                        t_0 = t_now
+                    elif driving and not urgent_steering and right_dist < LR_THRESH_URGENT:
+                        print("urgently steering left")
+                        steer = 90 + URGENT_STEER_VAL
+                        setSteer(steer)
+                        urgent_steering = True
+                        subtle_steering = False
+                        t_0 = t_now
+                    elif driving and not urgent_steering:
+                        if left_dist < LR_THRESH_SUBTLE and drifting(l_dists, l_dists_num_elements):
+                            print("subtle steering right due to left drift")
+                            steer = steer - SUBTLE_STEER_INCR
+                            setSteer(steer)
+                            l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
+                            t_0 = t_now
+                            subtle_steering = True
+                        elif right_dist < LR_THRESH_SUBTLE and drifting(r_dists, r_dists_num_elements):
+                            print("subtle steering left due to right drift")
+                            steer = steer + SUBTLE_STEER_INCR
+                            setSteer(steer)
+                            l_dists, r_dists, l_dists_num_elements, r_dists_num_elements = flush_LR_dist_arrays()
+                            t_0 = t_now
+                            subtle_steering = True
+                        elif subtle_steering and (t_now - t_0) > SUBTLE_STEER_LEN:
+                            print("setting course straight")
+                            steer = 90
+                            setSteer(steer)
+                            subtle_steering = False
+                            urgent_steering = False
+                        else:
+                            print("just keep swimmin\'")
+                    elif not driving and not (fwd_dist < FWD_THRESH or (left_dist < LR_THRESH_URGENT and right_dist < LR_THRESH_URGENT)):
+                        driving = True
+                        forward()
+                        print("start driving again")
+                    else:
+                        print("staying stopped")
+
+                    # edit video with relevant information:
+                    clean_recording.write(frame_out)
+
+                    cv.putText(frame_out,
+                        f"forward_sensor: {fwd_dist:.2f} cm",
+                        (20,30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out, 
+                        f"left_sensor: {left_dist: .2f} cm|| right_sensor: {right_dist: .2f} cm", 
+                        (20,60), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out,
+                        f"steer: {steer: .2f} || speed: {speed}",
+                        (20,90), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out,
+                        f"driving: {driving}",
+                        (20,120),cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    cv.putText(frame_out,
+                        f"time elapsed: {t_now - t_init}",
+                        (20,150),cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    
+                    
+                    edited_recording.write(frame_out)
+            except KeyboardInterrupt:
+                send_command(arduino, "STOP")
+                sleep(1)
+                print("KeyboardInterrupt caught, exiting.")
+            finally:            
+                print("Done!")
+                contour_recording.release()
+                clean_recording.release()
+                edited_recording.release()
+                cap.release()
+                cv.destroyAllWindows()
         else:
-            lost_counter += 1
-            stop()
-            sleep(0.05)
-            if lost_counter > LOST_THRESHOLD:
-                print("[INFO] End of path detected.")
-                stop()
-                break
-
-        # show & write outputs
-        cv2.imshow("Full Debug", frame)
-        cv2.imshow("ROI Debug", debug)
-        cv2.imshow("Mask", mask)
-
-        # record
-        clean_out.write(roi)
-        debug_full = cv2.vconcat([frame, cv2.resize(debug, (w,h))])[:h, :w]  
-        debug_out.write(debug_full)
-
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-
-finally:
-    stop()
-    clean_out.release()
-    debug_out.release()
-    cap.release()
-    cv2.destroyAllWindows()
-    arduino.close()
+            print("Arduino not connected.")
