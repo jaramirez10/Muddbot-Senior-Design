@@ -87,7 +87,7 @@ try:
 
         h, w = frame.shape[:2]
         roi_color = frame[y_0:h, x_left:x_right].copy()
-        print(f"roi_color_size: {size(roi_color)}")
+        print(f"roi_color_size: {roi_color.shape}")
         
         roi_gray = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(roi_gray, BLUR_KERNEL, 0)
