@@ -35,7 +35,6 @@ def setSpeed(speed: int):
 def setSteer(steer: int):
     send_cmd(f"STEER {steer}")
 
-p
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise RuntimeError("Cannot open camera")
@@ -83,7 +82,6 @@ try:
 
         h, w = frame.shape[:2]
         roi_color = frame[y_0:h, x_left:x_right].copy()
-
         
         roi_gray = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(roi_gray, BLUR_KERNEL, 0)
