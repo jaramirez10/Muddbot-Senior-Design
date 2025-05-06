@@ -48,7 +48,14 @@ frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
 size = (frame_width, frame_height)
 
-cropped_size = (int(frame_height * y_crop_percentage), int(frame_height * x_crop_percentage))
+y_0 = int(frame_height * y_crop_percentage)
+x_mid = frame_width / 2
+x_left = int(x_mid - (frame_width * x_crop_percentage / 2))
+x_right = int(x_mid + (frame_width * x_crop_percentage / 2))
+
+print(frame_height - y_0)
+print(x_right - x_left)
+                
 clean_recording = cv2.VideoWriter('clean.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
@@ -65,10 +72,6 @@ final_masked_recording = cv2.VideoWriter('masked_recording.avi',
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
 
-y_0 = int(frame_height * y_crop_percentage)
-x_mid = frame_width / 2
-x_left = int(x_mid - (frame_width * x_crop_percentage / 2))
-x_right = int(x_mid + (frame_width * x_crop_percentage / 2))
 
 print(f"y_0: {y_0}, x_left: {x_left}, x_right: {x_right}")
 
@@ -84,6 +87,7 @@ try:
 
         h, w = frame.shape[:2]
         roi_color = frame[y_0:h, x_left:x_right].copy()
+        print(f"roi_color_size: {size(roi_color)}")
         
         roi_gray = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
         blur = cv2.GaussianBlur(roi_gray, BLUR_KERNEL, 0)
