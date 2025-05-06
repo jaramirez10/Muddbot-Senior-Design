@@ -16,7 +16,7 @@ time.sleep(0.1)
 
 def send_cmd(cmd: str):
     """Send cmd and print it for debug."""
-    arduino.write((cmd + "\n").encode())
+    arduino.write(cmd.encode())
     print(f"[ARDUINO] → {cmd}")
 
 def forward():
