@@ -130,11 +130,15 @@ try:
         cv2.imshow("blur", blur)
         cv2.imshow("mask", mask_clean)
 
+
+        pre_processed_bgr = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+        masked_bgr = cv2.cvtColor(mask_clean, cv2.COLOR_GRAY2BGR)
+
         # --- Display ---
         clean_recording.write(frame)
         cropped_recording.write(roi_color)
-        pre_processed_recording.write(blur)
-        final_masked_recording.write(mask_clean)
+        pre_processed_recording.write(pre_processed_bgr)
+        final_masked_recording.write(masked_bgr)
 
         # Exit on ESC
         if cv2.waitKey(1) & 0xFF == 27:
