@@ -89,9 +89,10 @@ def main():
         cv2.imshow("Synthetic ROI Debug", roi_vis)
         cv2.imshow("Synthetic Mask", mask)
 
-        # wait 500 ms or until ESC
-        key = cv2.waitKey(500) & 0xFF
-        if key == 27:  # ESC
+        # wait until a key is pressed (0 = infinite). ESC will break.
+        key = cv2.waitKey(0) & 0xFF
+        if key == 27:  # ESC key
+            print("Test aborted by user.")
             break
 
     cv2.destroyAllWindows()
