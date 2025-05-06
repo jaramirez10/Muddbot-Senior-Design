@@ -43,15 +43,18 @@ try:
         _, mask = cv2.threshold(blur, THRESH_VAL, 255,
                                 cv2.THRESH_BINARY_INV)
 
+        cv2.imshow("blur", blur)
+        cv2.imshow("mask", mask)
+
         # --- Morphological Opening (remove small specks) ---
         kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
         mask_open = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_open)
-
+        cv2.imshow("mask_open", mask_open)
+        
         # --- Morphological Closing (fill small holes) ---
         kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
         mask_clean = cv2.morphologyEx(mask_open, cv2.MORPH_CLOSE, kernel_close)
 
-        cv2.imshow("preprocessed", mask_clean)
 
         # --- Contour Detection ---
         contours, _ = cv2.findContours(mask_clean,
