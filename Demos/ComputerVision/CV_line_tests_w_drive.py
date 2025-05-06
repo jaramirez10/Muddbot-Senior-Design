@@ -69,6 +69,8 @@ x_mid = frame_width / 2
 x_left = int(x_mid - (frame_width * x_crop_percentage / 2))
 x_right = int(x_mid + (frame_width * x_crop_percentage / 2))
 
+print(f"y_0: {y_0}, x_left: {x_left}, x_right: {x_right}")
+
 speed = 70
 setSpeed(speed)
 forward()
