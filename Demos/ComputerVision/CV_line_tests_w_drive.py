@@ -40,8 +40,8 @@ if not cap.isOpened():
     raise RuntimeError("Cannot open camera")
 
 
-y_crop_percentage = 0.4
-x_crop_percentage = 0.4
+y_crop_percentage = 0.2
+x_crop_percentage = 0.5
 
 
 frame_width = int(cap.get(3))
@@ -52,7 +52,13 @@ y_0 = int(frame_height * y_crop_percentage)
 x_mid = frame_width / 2
 x_left = int(x_mid - (frame_width * x_crop_percentage / 2))
 x_right = int(x_mid + (frame_width * x_crop_percentage / 2))
-cropped_size = (frame_height - y_0, x_right - x_left)
+
+
+ret, first = cap.read()
+h, w = first.shape[:2]
+roi_first = first[y_0:h, x_left:x_right].copy()
+
+cropped_size = roi_first.shape[:2]
                 
 clean_recording = cv2.VideoWriter('clean.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
@@ -123,6 +129,7 @@ try:
         cv2.imshow("roi", roi_color)
         cv2.imshow("blur", blur)
         cv2.imshow("mask", mask_clean)
+
         # --- Display ---
         clean_recording.write(frame)
         cropped_recording.write(roi_color)
