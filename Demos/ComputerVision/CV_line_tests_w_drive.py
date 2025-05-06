@@ -5,6 +5,8 @@ import serial
 import time
 from time import sleep
 
+from utils.utils import *
+
 
 THRESH_VAL       = 60       # binary inverse threshold for black tape
 MIN_CONTOUR_AREA = 500      # ignore contours smaller than this (in pixels)
@@ -20,29 +22,33 @@ BAUD_RATE   = 115200
 arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 time.sleep(0.1)
 
-def send_cmd(cmd: str):
-    arduino.write(cmd.encode())
+
 
 def forward():
-    send_cmd("FORWARD")
-
+    send_command(arduino, "FORWARD")
 def stop():
-    send_cmd("STOP")
-
-def setSpeed(speed: int):
-    send_cmd(f"SPEED {speed}")
-
-def setSteer(steer: int):
-    send_cmd(f"STEER {steer}")
+    send_command(arduino, "STOP")
+def setSpeed(speed):
+    send_command(arduino, f"SPEED {speed}")
+def setSteer(steer):
+    send_command(arduino, f"STEER {steer}")
+def getLFRdists():
+    return parse_sensor_prompt(send_command(arduino, "SENSOR"))
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise RuntimeError("Cannot open camera")
 
 
+y_crop_percentage = 0.4
+x_crop_percentage = 0.4
+
+
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
 size = (frame_width, frame_height)
+
+cropped_size = (int(frame_height * y_crop_percentage), int(frame_height * x_crop_percentage))
 clean_recording = cv2.VideoWriter('clean.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
@@ -58,10 +64,6 @@ pre_processed_recording = cv2.VideoWriter('pre_processed.avi',
 final_masked_recording = cv2.VideoWriter('masked_recording.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
-
-
-y_crop_percentage = 0.4
-x_crop_percentage = 0.4
 
 y_0 = int(frame_height * y_crop_percentage)
 x_mid = frame_width / 2
