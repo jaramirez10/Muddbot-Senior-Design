@@ -9,79 +9,65 @@ cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise RuntimeError("Cannot open camera")
 
-# Optionally set a lower resolution for speed
+# lower res for speed
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 # -------------------------------
-# Vision Parameters
+# Vision Params
 # -------------------------------
-THRESH_VAL   = 60        # Black tape threshold
-ROI_Y_START  = 0.5       # Process bottom 50% of the frame
-MORPH_KERNEL = (5, 5)    # Clean-up kernel size
+THRESH_VAL   = 60
+ROI_Y_START  = 0.5
+MORPH_KERNEL = (5, 5)
 
-# -------------------------------
-# Main Loop
-# -------------------------------
-try:
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-        h, w = frame.shape[:2]
-        y0 = int(h * ROI_Y_START)
+    # define ROI
+    y0 = int(h * ROI_Y_START)
+    roi_color = frame[y0:h, :].copy()
+    roi_gray  = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
 
-        # Crop ROI
-        roi_color = frame[y0:h, :].copy()
-        roi_gray  = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
+    # 1) blur + threshold
+    blur = cv2.GaussianBlur(roi_gray, (5,5), 0)
+    _, mask = cv2.threshold(blur, THRESH_VAL, 255, cv2.THRESH_BINARY_INV)
 
-        # Preprocess & mask
-        blur = cv2.GaussianBlur(roi_gray, (5,5), 0)
-        _, mask = cv2.threshold(blur, THRESH_VAL, 255, cv2.THRESH_BINARY_INV)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    # 2) clean mask
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-        # Find all contours
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # 3) find contours
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        debug = roi_color.copy()
-        best = None
-        best_err = float('inf')
-        min_area = (h - y0) * w * 0.02  # e.g. at least 2% of ROI area
+    # 4) create a black background and copy only the path region
+    path_only = np.zeros_like(roi_color)          # black image same size
+    # Use mask to copy color pixels where mask==255
+    path_only[mask==255] = roi_color[mask==255]
 
-        for c in contours:
-            area = cv2.contourArea(c)
-            if area < min_area:
-                continue
-            M = cv2.moments(c)
-            if M['m00'] == 0:
-                continue
-            cx = int(M['m10']/M['m00'])
-            err = abs(cx - (w//2))
-            # pick the contour whose centroid is closest to center
-            if err < best_err:
-                best_err = err
-                best = c
+    # 5) draw contour on the path_only image
+    if contours:
+        # filter by area & centroid proximity if needed...
+        # here we just draw the largest one
+        c = max(contours, key=cv2.contourArea)
+        cv2.drawContours(path_only, [c], -1, (0,255,0), 2)
 
-        if best is not None:
-            # draw only that one
-            cv2.drawContours(debug, [best], -1, (0,255,0), 2)
-            M = cv2.moments(best)
-            cx = int(M['m10']/M['m00'])
-            cy = int((h-y0)/2)
-            cv2.circle(debug, (cx, cy), 5, (0,0,255), -1)
+    # 6) composite back into full frame for display
+    output = np.zeros_like(frame)
+    output[y0:h, :] = path_only
 
-        # Overlay and display
-        output = frame.copy()
-        output[y0:h, :] = debug
-        cv2.rectangle(output, (0,y0), (w,h), (255,0,0), 2)
+    # draw ROI boundary
+    cv2.rectangle(output, (0,y0), (w,h), (255,0,0), 1)
 
-        cv2.imshow("Live Contour Outline", output)
-        cv2.imshow("Mask", mask)
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
+    # 7) show
+    cv2.imshow("Path Isolated (black bg)", output)
+    cv2.imshow("Mask", mask)
 
-finally:
-    cap.release()
-    cv2.destroyAllWindows()
+    if cv2.waitKey(1) & 0xFF == 27:
+        break
+
+cap.release()
+cv2.destroyAllWindows()
