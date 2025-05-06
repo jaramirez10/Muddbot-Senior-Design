@@ -52,9 +52,7 @@ y_0 = int(frame_height * y_crop_percentage)
 x_mid = frame_width / 2
 x_left = int(x_mid - (frame_width * x_crop_percentage / 2))
 x_right = int(x_mid + (frame_width * x_crop_percentage / 2))
-
-print(frame_height - y_0)
-print(x_right - x_left)
+cropped_size = (frame_height - y_0, x_right - x_left)
                 
 clean_recording = cv2.VideoWriter('clean.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
