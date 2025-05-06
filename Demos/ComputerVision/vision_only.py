@@ -32,37 +32,53 @@ try:
         h, w = frame.shape[:2]
         y0 = int(h * ROI_Y_START)
 
-        # 1) Crop ROI
-        roi_color = frame[y0:h, 0:w]
+        # Crop ROI
+        roi_color = frame[y0:h, :].copy()
         roi_gray  = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
 
-        # 2) Blur + Threshold (black→white mask)
+        # Preprocess & mask
         blur = cv2.GaussianBlur(roi_gray, (5,5), 0)
         _, mask = cv2.threshold(blur, THRESH_VAL, 255, cv2.THRESH_BINARY_INV)
-
-        # 3) Morphological Close to clean noise
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-        # 4) Find Contours
+        # Find all contours
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # 5) Draw the largest contour
         debug = roi_color.copy()
-        if contours:
-            largest = max(contours, key=cv2.contourArea)
-            cv2.drawContours(debug, [largest], -1, (0,255,0), 2)
+        best = None
+        best_err = float('inf')
+        min_area = (h - y0) * w * 0.02  # e.g. at least 2% of ROI area
 
-        # 6) Overlay ROI back onto full frame
+        for c in contours:
+            area = cv2.contourArea(c)
+            if area < min_area:
+                continue
+            M = cv2.moments(c)
+            if M['m00'] == 0:
+                continue
+            cx = int(M['m10']/M['m00'])
+            err = abs(cx - (w//2))
+            # pick the contour whose centroid is closest to center
+            if err < best_err:
+                best_err = err
+                best = c
+
+        if best is not None:
+            # draw only that one
+            cv2.drawContours(debug, [best], -1, (0,255,0), 2)
+            M = cv2.moments(best)
+            cx = int(M['m10']/M['m00'])
+            cy = int((h-y0)/2)
+            cv2.circle(debug, (cx, cy), 5, (0,0,255), -1)
+
+        # Overlay and display
         output = frame.copy()
-        output[y0:h, 0:w] = debug
-        cv2.rectangle(output, (0,y0), (w,h), (255,0,0), 2)  # ROI boundary
+        output[y0:h, :] = debug
+        cv2.rectangle(output, (0,y0), (w,h), (255,0,0), 2)
 
-        # 7) Show windows
         cv2.imshow("Live Contour Outline", output)
         cv2.imshow("Mask", mask)
-
-        # Exit on ESC
         if cv2.waitKey(1) & 0xFF == 27:
             break
 
