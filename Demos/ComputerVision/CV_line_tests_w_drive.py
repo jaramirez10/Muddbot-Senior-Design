@@ -119,6 +119,10 @@ try:
                                5, (0, 0, 255), -1)
                     
        
+        cv2.imshow("clean", frame)
+        cv2.imshow("roi", roi_color)
+        cv2.imshow("blur", blur)
+        cv2.imshow("mask", mask_clean)
         # --- Display ---
         clean_recording.write(frame)
         cropped_recording.write(roi_color)
