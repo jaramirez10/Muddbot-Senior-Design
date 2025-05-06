@@ -60,15 +60,15 @@ clean_recording = cv2.VideoWriter('clean.avi',
 
 cropped_recording = cv2.VideoWriter('cropped.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
-                        10, size) 
+                        10, cropped_size) 
 
 pre_processed_recording = cv2.VideoWriter('pre_processed.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
-                        10, size) 
+                        10, cropped_size) 
 
 final_masked_recording = cv2.VideoWriter('masked_recording.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
-                        10, size) 
+                        10, cropped_size) 
 
 
 print(f"y_0: {y_0}, x_left: {x_left}, x_right: {x_right}")
