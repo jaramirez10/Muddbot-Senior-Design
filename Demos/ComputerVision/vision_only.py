@@ -51,6 +51,8 @@ try:
         kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
         mask_clean = cv2.morphologyEx(mask_open, cv2.MORPH_CLOSE, kernel_close)
 
+        cv2.imshow("preprocessed", mask_clean)
+
         # --- Contour Detection ---
         contours, _ = cv2.findContours(mask_clean,
                                        cv2.RETR_EXTERNAL,
