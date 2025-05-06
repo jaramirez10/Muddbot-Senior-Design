@@ -124,12 +124,6 @@ try:
                     cv2.circle(display, (cx, cy),
                                5, (0, 0, 255), -1)
                     
-       
-        cv2.imshow("clean", frame)
-        cv2.imshow("roi", roi_color)
-        cv2.imshow("blur", blur)
-        cv2.imshow("mask", mask_clean)
-
 
         pre_processed_bgr = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
         masked_bgr = cv2.cvtColor(mask_clean, cv2.COLOR_GRAY2BGR)
