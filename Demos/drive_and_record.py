@@ -8,6 +8,13 @@ from time import sleep
 from utils.utils import *
 import serial
 
+from datetime import datetime
+
+# Get current date and time
+now = datetime.now()
+
+# Format it into a string like '2025-05-06_14-30-45'
+timestamp_suffix = now.strftime("%Y-%m-%d_%H-%M-%S")
 
 FWD_THRESH = 50 #cm
 LR_THRESH_URGENT = 40 #cm
@@ -49,10 +56,10 @@ if not cap.isOpened():
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
 size = (frame_width, frame_height)
-clean_recording = cv.VideoWriter('clean_recording.avi',  
+clean_recording = cv.VideoWriter(f'clean_{timestamp_suffix}.avi',  
                         cv.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
-edited_recording = cv.VideoWriter('edited_recording.avi',  
+edited_recording = cv.VideoWriter(f'edited_{timestamp_suffix}.avi',  
                         cv.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
 
