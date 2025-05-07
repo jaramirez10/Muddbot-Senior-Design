@@ -167,7 +167,7 @@ try:
                 cv2.arrowedLine(disp, start, end, (0,0,255), 2, tipLength=0.2)
         else:
             # 14) If no tape found, stop the car
-            stop()
+            print("no tape")
 
 
         setSteer(steer)
