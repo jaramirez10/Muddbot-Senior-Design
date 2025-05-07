@@ -150,7 +150,8 @@ try:
                 # 10) Steering law: error = centroid offset from ROI center
                 rw = disp.shape[1]
                 error = cx - (rw//2)
-                steer = int(90 - KP_STEER * (np.power(error, STEER_PWR)))
+                error_mag = np.power(abs(error), STEER_PWR)
+                steer = int(90 - KP_STEER * np.sign(error) * error_mag)
                 steer = max(MIN_STEER, min(MAX_STEER, steer))  # clip to safe range
 
                 # 11) Send steering command
