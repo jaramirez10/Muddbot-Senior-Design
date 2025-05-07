@@ -145,25 +145,27 @@ try:
 
                 # 10) Steering law: error = centroid offset from ROI center
                 
-                if direction == "LEFT":
-                    steer += steer_increment
-                elif direction == "RIGHT":
-                    steer -= steer_increment
-                elif direction == "STRAIGHT":
-                    steer = 90
-                    
+              
                 rw = disp.shape[1]
                 error = cx - (rw//2)
                 """steer = int(90 - KP_STEER * error)
                 steer = max(70, min(110, steer))  # clip to safe range"""
 
                 # 11) Send steering command
-                setSteer(steer)
 
                 # 12) Decide textual direction
-                if   error >  CENTER_TOLERANCE: direction = "LEFT"
-                elif error < -CENTER_TOLERANCE: direction = "RIGHT"
-
+                if   error >  CENTER_TOLERANCE: 
+                    direction = "LEFT"
+                    steer += steer_increment
+                elif error < -CENTER_TOLERANCE: 
+                    direction = "RIGHT"
+                    steer -= steer_increment
+                else:
+                    direction = "STRAIGHT"
+                    steer  = 90
+                    
+                setSteer(steer)
+                
                 # 13) Draw an arrow showing the correction vector
                 start = (rw//2, disp.shape[0]//2)
                 end   = (cx, cy)
