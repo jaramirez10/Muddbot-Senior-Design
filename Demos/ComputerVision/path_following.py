@@ -19,7 +19,7 @@ timestamp_suffix = now.strftime("%Y-%m-%d_%H-%M-%S")
 THRESH_VAL        = 60       # binary inverse threshold for black tape
 MIN_CONTOUR_AREA  = 500      # ignore contours smaller than this (in px)
 BLUR_KERNEL       = (5, 5)
-KP_STEER          = 0.08      # steering gain
+KP_STEER          = 0.095      # steering gain
 
 Y_CROP_PCT        = 0.4      # crop bottom 80% of frame
 X_CROP_PCT        = 0.8      # crop center 50% of width
@@ -27,7 +27,7 @@ CENTER_TOLERANCE  = 10       # px tolerance for “straight”
 speed             = 150
 MAX_STEER         = 120
 MIN_STEER         = 60
-STEER_PWR         = 0.9
+STEER_PWR         = 0.975
 
 # -------------------------------
 # Arduino / Motor Control Setup
