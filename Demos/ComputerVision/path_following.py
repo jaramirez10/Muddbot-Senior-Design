@@ -180,7 +180,7 @@ try:
         # --- Display ---
         clean_recording.write(frame)
         cropped_recording.write(roi)
-        pre_processed_recording.write(mask)
+        pre_processed_recording.write(mask_bgr)
         final_masked_recording.write(disp)
         # 17) Exit cleanly on ESC
         if cv2.waitKey(1) & 0xFF == 27:
