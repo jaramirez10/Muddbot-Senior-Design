@@ -19,11 +19,15 @@ timestamp_suffix = now.strftime("%Y-%m-%d_%H-%M-%S")
 THRESH_VAL        = 60       # binary inverse threshold for black tape
 MIN_CONTOUR_AREA  = 500      # ignore contours smaller than this (in px)
 BLUR_KERNEL       = (5, 5)
-KP_STEER          = 0.3      # steering gain
+KP_STEER          = 0.08      # steering gain
 
 Y_CROP_PCT        = 0.4      # crop bottom 80% of frame
 X_CROP_PCT        = 0.8      # crop center 50% of width
-CENTER_TOLERANCE  = 25       # px tolerance for “straight”
+CENTER_TOLERANCE  = 10       # px tolerance for “straight”
+speed             = 150
+MAX_STEER         = 120
+MIN_STEER         = 60
+STEER_PWR         = 0.8
 
 # -------------------------------
 # Arduino / Motor Control Setup
@@ -70,7 +74,7 @@ print(f"[INFO] ROI y0={y0}, x=[{x_left},{x_right}]")
 print("Press ESC to quit.")
 
 # Kick off the car
-setSpeed(60)
+setSpeed(120)
 forward()
 steer = 90
 setSteer(steer)
@@ -146,8 +150,8 @@ try:
                 # 10) Steering law: error = centroid offset from ROI center
                 rw = disp.shape[1]
                 error = cx - (rw//2)
-                steer = int(90 - KP_STEER * error)
-                steer = max(70, min(110, steer))  # clip to safe range
+                steer = int(90 - KP_STEER * (np.power(error, STEER_PWR)))
+                steer = max(MIN_STEER, min(MAX_STEER, steer))  # clip to safe range
 
                 # 11) Send steering command
                 setSteer(steer)
