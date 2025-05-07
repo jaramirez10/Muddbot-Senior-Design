@@ -8,8 +8,8 @@ MIN_CONTOUR_AREA  = 500      # ignore contours smaller than this (in px)
 BLUR_KERNEL       = (5, 5)
 KP_STEER          = 0.1      # steering gain
 
-Y_CROP_PCT        = 0.2      # crop bottom 80% of frame
-X_CROP_PCT        = 0.5      # crop center 50% of width
+Y_CROP_PCT        = 0.8      # crop bottom 80% of frame
+X_CROP_PCT        = 0.75      # crop center 50% of width
 CENTER_TOLERANCE  = 10       # px tolerance for “straight”
 
 # --- Stubbed Motor Functions ---
@@ -49,7 +49,7 @@ try:
             continue
 
         # 1) Crop ROI
-        roi = frame[y0:fh, x_left:x_right]
+        roi = frame[fh-y0:fh, x_left:x_right]
 
         # 2) Preprocess
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
