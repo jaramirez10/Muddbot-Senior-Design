@@ -73,7 +73,7 @@ print("Press ESC to quit.")
 setSpeed(60)
 forward()
 steer = 90
-steer_increment = 8
+setSteer(steer)
 
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
