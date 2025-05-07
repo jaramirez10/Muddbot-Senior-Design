@@ -144,10 +144,18 @@ try:
                 cv2.circle(disp, (cx, cy), 6, (255,0,0), -1)
 
                 # 10) Steering law: error = centroid offset from ROI center
+                
+                if direction == "LEFT":
+                    steer += steer_increment
+                elif direction == "RIGHT":
+                    steer -= steer_increment
+                elif direction == "STRAIGHT":
+                    steer = 90
+                    
                 rw = disp.shape[1]
                 error = cx - (rw//2)
-                steer = int(90 - KP_STEER * error)
-                steer = max(70, min(110, steer))  # clip to safe range
+                """steer = int(90 - KP_STEER * error)
+                steer = max(70, min(110, steer))  # clip to safe range"""
 
                 # 11) Send steering command
                 setSteer(steer)
@@ -164,12 +172,6 @@ try:
             # 14) If no tape found, stop the car
             stop()
 
-        if direction == "LEFT":
-            steer += steer_increment
-        elif direction == "RIGHT":
-            steer -= steer_increment
-        elif direction == "STRAIGHT":
-            steer = 90
 
         setSteer(steer)
 
