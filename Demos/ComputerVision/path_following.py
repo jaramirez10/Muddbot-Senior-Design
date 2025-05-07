@@ -192,8 +192,9 @@ try:
         # 17) Exit cleanly on ESC
         if cv2.waitKey(1) & 0xFF == 27:
             break
-except Exception as e: print(e)
+except BaseException as e: print(e)
 finally:
+    print("ooga")
     # 18) Cleanup: stop car, release camera, close windows
     stop()
     cap.release()
