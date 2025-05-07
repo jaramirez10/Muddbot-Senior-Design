@@ -8,14 +8,15 @@ from utils.utils import *
 # -------------------------------
 # Configuration Parameters
 # -------------------------------
-THRESH_VAL        = 60       # threshold for black-tape segmentation
-MIN_CONTOUR_AREA  = 500      # ignore tiny contours (noise)
-BLUR_KERNEL       = (5, 5)   # Gaussian blur kernel
-KP_STEER          = 0.1      # proportional gain for steering
+# --- Configurable Parameters ---
+THRESH_VAL        = 60       # binary inverse threshold for black tape
+MIN_CONTOUR_AREA  = 500      # ignore contours smaller than this (in px)
+BLUR_KERNEL       = (5, 5)
+KP_STEER          = 0.1      # steering gain
 
-Y_CROP_PCT        = 0.2      # start ROI at 20% down the frame
-X_CROP_PCT        = 0.5      # span 50% of the width around center
-CENTER_TOLERANCE  = 10       # px deadband for “straight” text
+Y_CROP_PCT        = 0.4      # crop bottom 80% of frame
+X_CROP_PCT        = 0.8      # crop center 50% of width
+CENTER_TOLERANCE  = 10       # px tolerance for “straight”
 
 # -------------------------------
 # Arduino / Motor Control Setup
@@ -42,7 +43,7 @@ def getLFRdists():
 # -------------------------------
 # Camera Setup
 # -------------------------------
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_V4L)
 if not cap.isOpened():
     raise RuntimeError("Could not open camera.")
 
@@ -73,7 +74,7 @@ try:
             continue
 
         # 2) Crop to the region where the tape should appear
-        roi = frame[y0:fh, x_left:x_right]
+        roi = frame[0:y0, x_left:x_right]
 
         # 3) Preprocess: grayscale & blur for threshold stability
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
