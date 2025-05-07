@@ -16,7 +16,7 @@ now = datetime.now()
 # Format it into a string like '2025-05-06_14-30-45'
 timestamp_suffix = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-FWD_THRESH = 50 #cm
+FWD_THRESH = 70 #cm
 LR_THRESH_URGENT = 40 #cm
 LR_THRESH_SUBTLE = 100 #cm
 
