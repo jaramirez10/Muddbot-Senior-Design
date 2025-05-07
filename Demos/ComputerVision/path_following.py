@@ -4,15 +4,18 @@ import numpy as np
 import serial
 import time
 from time import sleep
-
 from utils.utils import *
+# -------------------------------
+# Configuration Parameters
+# -------------------------------
+THRESH_VAL        = 60       # threshold for black-tape segmentation
+MIN_CONTOUR_AREA  = 500      # ignore tiny contours (noise)
+BLUR_KERNEL       = (5, 5)   # Gaussian blur kernel
+KP_STEER          = 0.1      # proportional gain for steering
 
-THRESH_VAL       = 60       # binary inverse threshold for black tape
-MIN_CONTOUR_AREA = 500      # ignore contours smaller than this (in pixels)
-BLUR_KERNEL      = (5, 5)
-
-# small proportional gain for steering
-KP_STEER = 0.1
+Y_CROP_PCT        = 0.2      # start ROI at 20% down the frame
+X_CROP_PCT        = 0.5      # span 50% of the width around center
+CENTER_TOLERANCE  = 10       # px deadband for “straight” text
 
 # -------------------------------
 # Arduino / Motor Control Setup
@@ -20,8 +23,9 @@ KP_STEER = 0.1
 SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE   = 115200
 
+# Open serial port
 arduino = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-time.sleep(0.1)
+time.sleep(0.1)  # let Arduino reset
 
 def forward():
     send_command(arduino, "FORWARD")
@@ -31,113 +35,115 @@ def setSpeed(speed):
     send_command(arduino, f"SPEED {speed}")
 def setSteer(steer):
     send_command(arduino, f"STEER {steer}")
+def getLFRdists():
+    return parse_sensor_prompt(send_command(arduino, "SENSOR"))
 
+
+# -------------------------------
+# Camera Setup
+# -------------------------------
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
-    raise RuntimeError("Cannot open camera")
+    raise RuntimeError("Could not open camera.")
 
-y_crop_percentage = 0.2
-x_crop_percentage = 0.5
+# Reduce resolution for speed
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+fw = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+fh = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-frame_width = int(cap.get(3))
-frame_height = int(cap.get(4))
-size = (frame_width, frame_height)
+# Precompute ROI bounds in pixels
+y0      = int(fh * Y_CROP_PCT)
+x_mid   = fw // 2
+x_left  = int(x_mid - (fw * X_CROP_PCT / 2))
+x_right = int(x_mid + (fw * X_CROP_PCT / 2))
 
-y_0 = int(frame_height * y_crop_percentage)
-x_mid = frame_width / 2
-x_left = int(x_mid - (frame_width * x_crop_percentage / 2))
-x_right = int(x_mid + (frame_width * x_crop_percentage / 2))
+print(f"[INFO] ROI y0={y0}, x=[{x_left},{x_right}]")
+print("Press ESC to quit.")
 
-ret, first = cap.read()
-h, w = first.shape[:2]
-roi_first = first[y_0:h, x_left:x_right].copy()
-
-cropped_size = (roi_first.shape[1], roi_first.shape[0])  # (width, height)
-                
-clean_recording = cv2.VideoWriter('clean.avi',  
-                        cv2.VideoWriter_fourcc(*'MJPG'), 
-                        10, size) 
-final_masked_recording = cv2.VideoWriter('masked_recording.avi',  
-                        cv2.VideoWriter_fourcc(*'MJPG'), 
-                        10, cropped_size) 
-
-print(f"y_0: {y_0}, x_left: {x_left}, x_right: {x_right}")
-
-speed = 70
-setSpeed(speed)
+# Kick off the car
+setSpeed(70)
 forward()
 
 try:
     while True:
+        # 1) Grab a frame
         ret, frame = cap.read()
         if not ret:
-            break
+            continue
 
-        h, w = frame.shape[:2]
-        # 1) crop
-        roi_color = frame[y_0:h, x_left:x_right].copy()
+        # 2) Crop to the region where the tape should appear
+        roi = frame[y0:fh, x_left:x_right]
 
-        # 2) grayscale→blur→threshold
-        roi_gray = cv2.cvtColor(roi_color, cv2.COLOR_BGR2GRAY)
-        blur = cv2.GaussianBlur(roi_gray, BLUR_KERNEL, 0)
-        _, mask = cv2.threshold(blur, THRESH_VAL, 255,
-                                cv2.THRESH_BINARY_INV)
+        # 3) Preprocess: grayscale & blur for threshold stability
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, BLUR_KERNEL, 0)
 
-        # 3) opening + closing
-        kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
-        mask_open = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_open)
-        kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
-        mask_clean = cv2.morphologyEx(mask_open, cv2.MORPH_CLOSE, kernel_close)
+        # 4) Binary segmentation: black tape → white mask
+        _, mask = cv2.threshold(blur, THRESH_VAL, 255, cv2.THRESH_BINARY_INV)
 
-        # 4) contour detection
-        contours, _ = cv2.findContours(mask_clean,
-                                       cv2.RETR_EXTERNAL,
-                                       cv2.CHAIN_APPROX_SIMPLE)
-        display = np.zeros_like(roi_color)
+        # 5) Morphological cleaning
+        ker_open  = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+        ker_close = cv2.getStructuringElement(cv2.MORPH_RECT, (7,7))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, ker_open)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, ker_close)
 
-        # --- NEW: Steering logic based on largest contour centroid ---
-        if contours:
-            # pick the largest
-            c = max(contours, key=cv2.contourArea)
+        # 6) Contour detection
+        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # 7) Prepare a color debug view of the ROI
+        disp = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+        direction = "STRAIGHT"
+
+        if cnts:
+            # 8) Choose the largest contour (assumed to be the tape)
+            c = max(cnts, key=cv2.contourArea)
             area = cv2.contourArea(c)
             if area > MIN_CONTOUR_AREA:
-                # draw it
-                cv2.drawContours(display, [c], -1, (0,255,0), 2)
+                # Draw the contour outline
+                cv2.drawContours(disp, [c], -1, (0,255,0), 2)
+
+                # 9) Compute its centroid
                 M = cv2.moments(c)
-                if M["m00"] > 0:
-                    cx = int(M["m10"]/M["m00"])
-                    cy = int(M["m01"]/M["m00"])
-                    cv2.circle(display, (cx, cy), 5, (0,0,255), -1)
+                cx = int(M["m10"]/M["m00"])
+                cy = int(M["m01"]/M["m00"])
+                cv2.circle(disp, (cx, cy), 6, (255,0,0), -1)
 
-                    # compute error relative to center of ROI
-                    roi_w = roi_color.shape[1]
-                    error = cx - (roi_w // 2)
+                # 10) Steering law: error = centroid offset from ROI center
+                rw = disp.shape[1]
+                error = cx - (rw//2)
+                steer = int(90 - KP_STEER * error)
+                steer = max(70, min(110, steer))  # clip to safe range
 
-                    # map error → steer angle around 90°
-                    steer = int(90 - KP_STEER * error)
-                    steer = max(70, min(110, steer))  # clip to [70,110]
-                    setSteer(steer)
-                    cv2.putText(display, f"Steer:{steer}", (10,30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6,
-                                (255,255,255), 2)
+                # 11) Send steering command
+                setSteer(steer)
+
+                # 12) Decide textual direction
+                if   error >  CENTER_TOLERANCE: direction = "LEFT"
+                elif error < -CENTER_TOLERANCE: direction = "RIGHT"
+
+                # 13) Draw an arrow showing the correction vector
+                start = (rw//2, disp.shape[0]//2)
+                end   = (cx, cy)
+                cv2.arrowedLine(disp, start, end, (0,0,255), 2, tipLength=0.2)
         else:
-            # no line found: you could stop or keep previous steering
+            # 14) If no tape found, stop the car
             stop()
-            time.sleep(0.5)
-            forward()
-        # ------------------------------------------------------------**
 
-        # 5) record each stage
-        clean_recording.write(frame)
-        final_masked_recording.write(cv2.cvtColor(mask_clean, cv2.COLOR_GRAY2BGR))
+        # 15) Annotate the direction text
+        cv2.putText(disp, direction, (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2)
 
-        # 6) display if desired
-        cv2.imshow("Cropped ROI", display)
-        cv2.imshow("Mask", mask_clean)
+        # 16) Show the live debug windows
+        cv2.imshow("ROI + Contour", disp)
+        cv2.imshow("Mask", mask)
+
+        # 17) Exit cleanly on ESC
         if cv2.waitKey(1) & 0xFF == 27:
             break
 
 finally:
+    # 18) Cleanup: stop car, release camera, close windows
     stop()
     cap.release()
     cv2.destroyAllWindows()
