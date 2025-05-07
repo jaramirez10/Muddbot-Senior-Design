@@ -63,7 +63,7 @@ print(f"[INFO] ROI y0={y0}, x=[{x_left},{x_right}]")
 print("Press ESC to quit.")
 
 # Kick off the car
-setSpeed(70)
+setSpeed(60)
 forward()
 steer = 90
 steer_increment = 3
@@ -157,10 +157,6 @@ try:
             # 14) If no tape found, stop the car
             stop()
 
-        # 15) Annotate the direction text
-        cv2.putText(disp, direction, (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2)
-
         if direction == "LEFT":
             steer += steer_increment
         elif direction == "RIGHT":
@@ -169,7 +165,15 @@ try:
             steer = 90
 
         setSteer(steer)
+
+        # 15) Annotate the direction text
+        cv2.putText(disp, direction, (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2)
+        cv2.putText(disp, f"STEER: {steer}", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2)
         
+
+
         blur_bgr = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
 
         # --- Display ---
