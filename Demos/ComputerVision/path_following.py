@@ -65,6 +65,8 @@ print("Press ESC to quit.")
 # Kick off the car
 setSpeed(70)
 forward()
+steer = 90
+steer_increment = 3
 
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
@@ -159,7 +161,15 @@ try:
         cv2.putText(disp, direction, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2)
 
+        if direction == "LEFT":
+            steer += steer_increment
+        elif direction == "RIGHT":
+            steer -= steer_increment
+        elif direction == "STRAIGHT":
+            steer = 90
 
+        setSteer(steer)
+        
         blur_bgr = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
 
         # --- Display ---
