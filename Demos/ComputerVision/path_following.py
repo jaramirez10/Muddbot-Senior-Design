@@ -85,11 +85,11 @@ cropped_recording = cv2.VideoWriter('cropped.avi',
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, cropped_size) 
 
-pre_processed_recording = cv2.VideoWriter('pre_processed.avi',  
+pre_processed_recording = cv2.VideoWriter('mask.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, cropped_size) 
 
-final_masked_recording = cv2.VideoWriter('masked_recording.avi',  
+final_masked_recording = cv2.VideoWriter('disp.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, cropped_size) 
 try:
@@ -175,11 +175,12 @@ try:
 
 
         blur_bgr = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+        mask_bgr = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
         # --- Display ---
         clean_recording.write(frame)
         cropped_recording.write(roi)
-        pre_processed_recording.write(blur_bgr)
+        pre_processed_recording.write(mask)
         final_masked_recording.write(disp)
         # 17) Exit cleanly on ESC
         if cv2.waitKey(1) & 0xFF == 27:
