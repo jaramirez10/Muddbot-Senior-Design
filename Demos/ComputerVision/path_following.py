@@ -185,7 +185,7 @@ try:
         # 17) Exit cleanly on ESC
         if cv2.waitKey(1) & 0xFF == 27:
             break
-
+except Exception as e: print(e)
 finally:
     # 18) Cleanup: stop car, release camera, close windows
     stop()
