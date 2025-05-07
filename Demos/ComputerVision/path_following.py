@@ -5,6 +5,13 @@ import serial
 import time
 from time import sleep
 from utils.utils import *
+from datetime import datetime
+
+# Get current date and time
+now = datetime.now()
+
+# Format it into a string like '2025-05-06_14-30-45'
+timestamp_suffix = now.strftime("%Y-%m-%d_%H-%M-%S")
 # -------------------------------
 # Configuration Parameters
 # -------------------------------
@@ -77,19 +84,19 @@ h, w = first.shape[:2]
 roi_first = first[0:y0, x_left:x_right].copy()
 
 cropped_size = (roi_first.shape[1], roi_first.shape[0])  # (width, height)
-clean_recording = cv2.VideoWriter('clean.avi',  
+clean_recording = cv2.VideoWriter(f'clean_{timestamp_suffix}.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, size) 
 
-cropped_recording = cv2.VideoWriter('cropped.avi',  
+cropped_recording = cv2.VideoWriter(f'cropped_{timestamp_suffix}.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, cropped_size) 
 
-pre_processed_recording = cv2.VideoWriter('mask.avi',  
+pre_processed_recording = cv2.VideoWriter(f'mask_{timestamp_suffix}.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, cropped_size) 
 
-final_masked_recording = cv2.VideoWriter('disp.avi',  
+final_masked_recording = cv2.VideoWriter(f'disp_{timestamp_suffix}.avi',  
                         cv2.VideoWriter_fourcc(*'MJPG'), 
                         10, cropped_size) 
 try:
