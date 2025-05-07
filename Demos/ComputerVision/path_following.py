@@ -23,7 +23,7 @@ KP_STEER          = 0.3      # steering gain
 
 Y_CROP_PCT        = 0.4      # crop bottom 80% of frame
 X_CROP_PCT        = 0.8      # crop center 50% of width
-CENTER_TOLERANCE  = 10       # px tolerance for “straight”
+CENTER_TOLERANCE  = 15       # px tolerance for “straight”
 
 # -------------------------------
 # Arduino / Motor Control Setup
