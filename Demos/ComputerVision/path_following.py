@@ -27,7 +27,7 @@ CENTER_TOLERANCE  = 10       # px tolerance for “straight”
 speed             = 150
 MAX_STEER         = 120
 MIN_STEER         = 60
-STEER_PWR         = 0.8
+STEER_PWR         = 2
 
 # -------------------------------
 # Arduino / Motor Control Setup
