@@ -19,7 +19,7 @@ def setSpeed(s): print(f"[MOTOR] SPEED {s}")
 def setSteer(s): print(f"[MOTOR] STEER {s}")
 
 # --- Camera Setup ---
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_V4L)
 if not cap.isOpened():
     raise RuntimeError("Could not open camera.")
 
