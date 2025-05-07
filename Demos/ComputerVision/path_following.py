@@ -70,10 +70,10 @@ print(f"[INFO] ROI y0={y0}, x=[{x_left},{x_right}]")
 print("Press ESC to quit.")
 
 # Kick off the car
-setSpeed(60)
+setSpeed(50)
 forward()
 steer = 90
-steer_increment = 8
+steer_increment = 12
 
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
