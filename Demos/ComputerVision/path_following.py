@@ -19,7 +19,7 @@ timestamp_suffix = now.strftime("%Y-%m-%d_%H-%M-%S")
 THRESH_VAL        = 60       # binary inverse threshold for black tape
 MIN_CONTOUR_AREA  = 500      # ignore contours smaller than this (in px)
 BLUR_KERNEL       = (5, 5)
-KP_STEER          = 0.1      # steering gain
+KP_STEER          = 0.3      # steering gain
 
 Y_CROP_PCT        = 0.4      # crop bottom 80% of frame
 X_CROP_PCT        = 0.8      # crop center 50% of width
@@ -70,10 +70,10 @@ print(f"[INFO] ROI y0={y0}, x=[{x_left},{x_right}]")
 print("Press ESC to quit.")
 
 # Kick off the car
-setSpeed(50)
+setSpeed(60)
 forward()
 steer = 90
-steer_increment = 12
+steer_increment = 8
 
 frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
@@ -144,28 +144,18 @@ try:
                 cv2.circle(disp, (cx, cy), 6, (255,0,0), -1)
 
                 # 10) Steering law: error = centroid offset from ROI center
-                
-              
                 rw = disp.shape[1]
                 error = cx - (rw//2)
-                """steer = int(90 - KP_STEER * error)
-                steer = max(70, min(110, steer))  # clip to safe range"""
+                steer = int(90 - KP_STEER * error)
+                steer = max(70, min(110, steer))  # clip to safe range
 
                 # 11) Send steering command
+                setSteer(steer)
 
                 # 12) Decide textual direction
-                if   error >  CENTER_TOLERANCE: 
-                    direction = "LEFT"
-                    steer += steer_increment
-                elif error < -CENTER_TOLERANCE: 
-                    direction = "RIGHT"
-                    steer -= steer_increment
-                else:
-                    direction = "STRAIGHT"
-                    steer  = 90
-                    
-                setSteer(steer)
-                
+                if   error >  CENTER_TOLERANCE: direction = "LEFT"
+                elif error < -CENTER_TOLERANCE: direction = "RIGHT"
+
                 # 13) Draw an arrow showing the correction vector
                 start = (rw//2, disp.shape[0]//2)
                 end   = (cx, cy)
@@ -198,7 +188,6 @@ try:
             break
 except BaseException as e: print(e)
 finally:
-    print("ooga")
     # 18) Cleanup: stop car, release camera, close windows
     stop()
     cap.release()
