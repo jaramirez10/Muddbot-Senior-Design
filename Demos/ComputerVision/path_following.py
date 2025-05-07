@@ -66,6 +66,30 @@ print("Press ESC to quit.")
 setSpeed(70)
 forward()
 
+frame_width = int(cap.get(3))
+frame_height = int(cap.get(4))
+size = (frame_width, frame_height)
+
+ret, first = cap.read()
+h, w = first.shape[:2]
+roi_first = first[y0:h, x_left:x_right].copy()
+
+cropped_size = (roi_first.shape[1], roi_first.shape[0])  # (width, height)
+clean_recording = cv2.VideoWriter('clean.avi',  
+                        cv2.VideoWriter_fourcc(*'MJPG'), 
+                        10, size) 
+
+cropped_recording = cv2.VideoWriter('cropped.avi',  
+                        cv2.VideoWriter_fourcc(*'MJPG'), 
+                        10, cropped_size) 
+
+pre_processed_recording = cv2.VideoWriter('pre_processed.avi',  
+                        cv2.VideoWriter_fourcc(*'MJPG'), 
+                        10, cropped_size) 
+
+final_masked_recording = cv2.VideoWriter('masked_recording.avi',  
+                        cv2.VideoWriter_fourcc(*'MJPG'), 
+                        10, cropped_size) 
 try:
     while True:
         # 1) Grab a frame
@@ -74,7 +98,7 @@ try:
             continue
 
         # 2) Crop to the region where the tape should appear
-        roi = frame[0:y0, x_left:x_right]
+        roi = frame[0:y0, x_left:x_right].copy()
 
         # 3) Preprocess: grayscale & blur for threshold stability
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
@@ -135,10 +159,14 @@ try:
         cv2.putText(disp, direction, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255,255,255), 2)
 
-        # 16) Show the live debug windows
-        cv2.imshow("ROI + Contour", disp)
-        cv2.imshow("Mask", mask)
 
+        blur_bgr = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)
+
+        # --- Display ---
+        clean_recording.write(frame)
+        cropped_recording.write(roi)
+        pre_processed_recording.write(blur_bgr)
+        final_masked_recording.write(disp)
         # 17) Exit cleanly on ESC
         if cv2.waitKey(1) & 0xFF == 27:
             break
